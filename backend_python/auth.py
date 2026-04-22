@@ -48,3 +48,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except InvalidTokenError:
         raise credentials_exception
     return user_id
+
+def get_admin_user(user_id: str = Depends(get_current_user)):
+    from database import users_collection
+    user = users_collection.find_one({"id": user_id})
+    if not user or user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action"
+        )
+    return user_id

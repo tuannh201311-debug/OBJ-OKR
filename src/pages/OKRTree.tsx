@@ -5,11 +5,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Plus, AlertCircle, Trash2 } from 'lucide-react';
+import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 const getProgressColor = (progress: number) => {
   if (progress >= 80) return 'bg-[#10b981]';
@@ -17,135 +18,128 @@ const getProgressColor = (progress: number) => {
   return 'bg-[#ef4444]';
 };
 
-const getDeadlineStatus = (deadline: string, progress: number) => {
-  if (progress >= 100) return { label: 'Done', variant: 'success' as const };
+const getDeadlineStatus = (deadline: string, progress: number, completedAt?: string) => {
+  if (progress >= 100) {
+    if (completedAt && deadline) {
+      const compDate = new Date(completedAt);
+      const dlDate = new Date(deadline);
+      compDate.setHours(0, 0, 0, 0);
+      dlDate.setHours(0, 0, 0, 0);
+      if (compDate > dlDate) {
+        return { label: 'Hoàn thành chậm', variant: 'destructive' as const, color: 'text-rose-500' };
+      }
+    }
+    return { label: 'Hoàn thành', variant: 'success' as const, color: 'text-emerald-500' };
+  }
   const today = new Date();
+  if (!deadline) return { label: 'Chưa có hạn', variant: 'secondary' as const, color: 'text-slate-400' };
   const dlDate = new Date(deadline);
   const diffTime = dlDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { label: 'Quá hạn', variant: 'destructive' as const };
-  if (progress === 0) return { label: 'To do', variant: 'secondary' as const };
-  return { label: 'In progress', variant: 'warning' as const };
+  if (diffDays < 0) return { label: 'Quá hạn', variant: 'destructive' as const, color: 'text-rose-500' };
+  if (progress === 0) return { label: 'Chờ thực hiện', variant: 'secondary' as const, color: 'text-slate-400' };
+  return { label: 'Đang làm', variant: 'warning' as const, color: 'text-amber-500' };
+};
+
+const getPersonnelColor = (name: string) => {
+  if (name === 'Chưa gán') return 'bg-slate-50 border-slate-200 text-slate-500';
+  const colors = [
+    'bg-blue-50 border-blue-100 text-blue-700',
+    'bg-emerald-50 border-emerald-100 text-emerald-700',
+    'bg-purple-50 border-purple-100 text-purple-700',
+    'bg-amber-50 border-amber-100 text-amber-700',
+    'bg-cyan-50 border-cyan-100 text-cyan-700',
+    'bg-rose-50 border-rose-100 text-rose-700',
+    'bg-indigo-50 border-indigo-100 text-indigo-700',
+    'bg-teal-50 border-teal-100 text-teal-700',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
 };
 
 export function OKRTree() {
-  const { okrs, user, addOkr, updateOkr, deleteOkr, addBigTask, updateBigTask, deleteBigTask, addSubTask, updateSubTask, deleteSubTask, importOkrs, highlightTaskId, setHighlightTaskId, systemUsers } = useAppContext();
+  const { okrs, user, addOkr, updateOkr, deleteOkr, highlightTaskId, setHighlightTaskId, importOkrs } = useAppContext();
   const isAdmin = user?.role === 'admin';
   const highlightRef = useRef<HTMLDivElement>(null);
 
   const [newOkrTitle, setNewOkrTitle] = useState('');
   const [newOkrDeadline, setNewOkrDeadline] = useState('');
-  const [newOkrOwner, setNewOkrOwner] = useState('');
   const [editOkrTitle, setEditOkrTitle] = useState('');
   const [editOkrDeadline, setEditOkrDeadline] = useState('');
-  const [editOkrOwner, setEditOkrOwner] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterAssignee, setFilterAssignee] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
-  const [newBtTitle, setNewBtTitle] = useState('');
-  const [newBtWeight, setNewBtWeight] = useState(100);
-  const [newBtDeadline, setNewBtDeadline] = useState('');
-
-  const [newStTitle, setNewStTitle] = useState('');
-  const [newStAssignee, setNewStAssignee] = useState('');
-  const [newStAssignee2, setNewStAssignee2] = useState('');
-  const [newStWeight, setNewStWeight] = useState(100);
-  const [newStDeadline, setNewStDeadline] = useState('');
-  const [editStProgress, setEditStProgress] = useState(0);
-  const [editStNote, setEditStNote] = useState('');
-  const [editStAssignee, setEditStAssignee] = useState('');
-  const [editStAssignee2, setEditStAssignee2] = useState('');
-  const [editStDeadline, setEditStDeadline] = useState('');
+  const filteredOkrs = useMemo(() => {
+    let result = okrs;
+    if (searchQuery) {
+        result = result.map(okr => {
+            const filteredBTs = okr.children.map(bt => {
+                const filteredSTs = bt.children.filter(st => st.title.toLowerCase().includes(searchQuery.toLowerCase()));
+                return { ...bt, children: filteredSTs };
+            }).filter(bt => bt.children.length > 0 || bt.title.toLowerCase().includes(searchQuery.toLowerCase()));
+            return { ...okr, children: filteredBTs };
+        }).filter(okr => okr.children.length > 0 || okr.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    if (filterAssignee === 'all' && !filterStatus) return result;
+    return result.map(okr => {
+      const filteredBigTasks = okr.children.map(bt => {
+        const filteredSubTasks = bt.children.filter(st => {
+          const names = (st.assignee || '').split(',').map(n => n.trim());
+          const matchAssignee = filterAssignee === 'all' || names.includes(filterAssignee) || (filterAssignee === 'Chưa gán' && (names.length === 0 || !st.assignee || st.assignee === 'Chưa gán'));
+          if (!matchAssignee) return false;
+          if (filterStatus) {
+            const dlStatus = getDeadlineStatus(st.deadline, st.progress, st.completed_at);
+            if (filterStatus === 'Done') return dlStatus.label.includes('Hoàn thành');
+            if (filterStatus === 'Doing') return dlStatus.label === 'Đang làm';
+            if (filterStatus === 'Delay') return dlStatus.label === 'Quá hạn';
+          }
+          return true;
+        });
+        return { ...bt, children: filteredSubTasks };
+      }).filter(bt => bt.children.length > 0);
+      return { ...okr, children: filteredBigTasks };
+    }).filter(okr => okr.children.length > 0);
+  }, [okrs, filterAssignee, filterStatus, searchQuery]);
 
   const expandedOkrIds = highlightTaskId
     ? okrs.filter(okr => okr.children.some(bt => bt.children.some(st => st.id === highlightTaskId))).map(o => o.id)
     : [];
-
-  const [filterAssignee, setFilterAssignee] = useState<string>('all');
-
-  const filteredOkrs = useMemo(() => {
-    if (filterAssignee === 'all') return okrs;
-
-    return okrs.map(okr => {
-      const filteredBigTasks = okr.children.map(bt => {
-        const filteredSubTasks = bt.children.filter(st => {
-          const names = st.assignee.split(',').map(n => n.trim());
-          return names.includes(filterAssignee);
-        });
-        return { ...bt, children: filteredSubTasks };
-      }).filter(bt => bt.children.length > 0);
-
-      return { ...okr, children: filteredBigTasks };
-    }).filter(okr => okr.children.length > 0);
-  }, [okrs, filterAssignee]);
 
   const [accordionValue, setAccordionValue] = useState<string[]>(expandedOkrIds.length > 0 ? expandedOkrIds : (okrs.length > 0 ? [okrs[0].id] : []));
 
   useEffect(() => {
     if (highlightTaskId && expandedOkrIds.length > 0) {
       setAccordionValue(expandedOkrIds);
-      setTimeout(() => {
-        highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
+      setTimeout(() => highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
       const timer = setTimeout(() => setHighlightTaskId(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [highlightTaskId]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    Papa.parse(file, {
-      complete: (results) => {
-        const data = results.data as string[][];
-        if (data.length < 2) { alert('File không đúng định dạng.'); return; }
-        let headerIndex = 0;
-        for (let i = 0; i < Math.min(5, data.length); i++) {
-          if (data[i].some(cell => cell?.toLowerCase().includes('okr'))) { headerIndex = i; break; }
-        }
-        const newOkrsMap = new Map<string, any>();
-        let currentOkr = '', currentBtTitle = '', currentBtDeadline = '', currentBtWeight = 0, currentStTitle = '';
-        for (let i = headerIndex + 1; i < data.length; i++) {
-          const row = data[i];
-          if (!row || row.length < 2) continue;
-          if (row[0]?.trim()) currentOkr = row[0].trim();
-          if (row[2]?.trim()) { currentBtTitle = row[2].trim(); currentBtDeadline = row[1]?.trim() || '2026-12-31'; currentBtWeight = parseFloat(row[3]?.replace('%', '')) || 0; }
-          if (row[4]?.trim()) currentStTitle = row[4].trim();
-          if (!currentOkr) continue;
-          const okrTitle = currentOkr, btTitle = currentBtTitle || 'Untitled', stTitle = currentStTitle || 'Untitled';
-          const hasSubTaskInfo = row[4]?.trim() || row[5]?.trim();
-          const assignee = row[5]?.trim() || 'Chưa gán';
-          const weight = parseFloat(row[6]?.replace('%', '')) || 0;
-          const progress = parseFloat(row[7]?.replace('%', '')) || 0;
-          const note = row[8]?.trim() || '';
-          let deadline = row[1]?.trim() || currentBtDeadline;
-          if (deadline.includes('/')) { const parts = deadline.split('/'); if (parts.length === 2) deadline = `2026-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`; }
-          if (!newOkrsMap.has(okrTitle)) newOkrsMap.set(okrTitle, { id: `okr-imp-${Date.now()}-${Math.random()}`, title: okrTitle, type: 'OKR', progress: 0, deadline: '2026-12-31', children: [] });
-          const okr = newOkrsMap.get(okrTitle)!;
-          let bt = okr.children.find((b: any) => b.title === btTitle);
-          if (!bt) { bt = { id: `bt-imp-${Date.now()}-${Math.random()}`, title: btTitle, progress: 0, weight: currentBtWeight, deadline, children: [] }; okr.children.push(bt); }
-          if (hasSubTaskInfo) bt.children.push({ id: `st-imp-${Date.now()}-${Math.random()}`, title: stTitle, assignee, weight, deadline, progress, status: progress === 100 ? 'done' : progress > 0 ? 'in-progress' : 'todo', note });
-        }
-        importOkrs(Array.from(newOkrsMap.values()));
-        alert('Import thành công!');
-      }
-    });
-  };
+  useEffect(() => {
+    if (filterAssignee !== 'all' || filterStatus || searchQuery) {
+      setAccordionValue(filteredOkrs.map(o => o.id));
+    }
+  }, [filterAssignee, filterStatus, searchQuery]);
+
   const personnelStats = useMemo(() => {
-    const stats: Record<string, { total: number; delayed: number }> = {};
+    const stats: Record<string, { total: number; done: number; doing: number; delayed: number }> = {};
     okrs.forEach(okr => {
       okr.children.forEach(bt => {
         bt.children.forEach(st => {
-          const names = st.assignee.split(',').map(n => n.trim()).filter(n => n && n !== 'Chưa gán');
+          const names = (st.assignee || '').split(',').map(n => n.trim()).filter(n => n && n !== 'Chưa gán');
           if (names.length === 0) names.push('Chưa gán');
-          
           names.forEach(assignee => {
-            if (!stats[assignee]) {
-              stats[assignee] = { total: 0, delayed: 0 };
-            }
+            if (!stats[assignee]) stats[assignee] = { total: 0, done: 0, doing: 0, delayed: 0 };
             stats[assignee].total++;
-            const dlStatus = getDeadlineStatus(st.deadline, st.progress);
-            if (dlStatus.label === 'Quá hạn') {
-              stats[assignee].delayed++;
-            }
+            const dlStatus = getDeadlineStatus(st.deadline, st.progress, st.completed_at);
+            if (dlStatus.label.includes('Hoàn thành')) stats[assignee].done++;
+            else if (dlStatus.label === 'Quá hạn') stats[assignee].delayed++;
+            else if (dlStatus.label === 'Đang làm') stats[assignee].doing++;
           });
         });
       });
@@ -153,92 +147,110 @@ export function OKRTree() {
     return Object.entries(stats).sort((a, b) => b[1].total - a[1].total);
   }, [okrs]);
 
-
   return (
-    <div className="flex flex-col gap-5 h-full">
-      <div className="flex flex-wrap gap-2 p-3 bg-[#f8fafc] rounded-lg border border-[#e2e8f0] shadow-sm">
-        <div className="text-[10px] font-bold text-[#64748b] w-full mb-1 uppercase tracking-widest flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb]"></div>
-            Thống kê nhân sự đang thực hiện {filterAssignee !== 'all' && <span className="text-[#2563eb] normal-case"> - Đang lọc: {filterAssignee}</span>}
+    <div className="h-[calc(100vh-80px)] flex flex-col gap-3 font-inter overflow-hidden px-2">
+      
+      {/* Phân bổ nguồn lực */}
+      <div className="glass-card p-4 rounded-[1.5rem] flex flex-col gap-3 shadow-sm flex-shrink-0">
+        <div className="flex items-center justify-between gap-4 border-b border-white/20 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-[#2563eb] flex items-center justify-center">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-sm font-bold text-[#1e3a8a] tracking-tight uppercase">Phân bổ nguồn lực</h2>
           </div>
-          {filterAssignee !== 'all' && (
+          <div className="relative w-[350px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+            <Input 
+              placeholder="Tìm nhanh mục tiêu..." 
+              className="pl-10 h-10 bg-white/60 border-white/80 text-[14px] rounded-xl focus:bg-white transition-all shadow-none" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-2 max-h-[120px] overflow-y-auto pr-2 scrollbar-hide">
+          <button 
+            onClick={() => { setFilterAssignee('all'); setFilterStatus(null); }}
+            className={`flex items-center justify-center gap-2 h-11 px-6 rounded-xl border transition-all text-[13px] font-black ${filterAssignee === 'all' && !filterStatus ? 'bg-[#1e3a8a] text-white border-none shadow-md scale-105' : 'bg-white/60 border-white/80 text-[#1e3a8a] hover:bg-white'}`}
+          >
+            <Filter className="h-4 w-4" /> ALL
+          </button>
+
+          {personnelStats.map(([name, stat]) => {
+            const colorClass = getPersonnelColor(name);
+            const isPersonActive = filterAssignee === name;
+            if (name === 'Chưa gán') return null;
+
+            return (
+              <div key={name} className={`flex items-center gap-3 h-11 px-4 rounded-xl border transition-all ${isPersonActive ? 'bg-white border-blue-200 shadow-sm ring-1 ring-blue-50' : `${colorClass} border-white/60`}`}>
+                <div 
+                  className={`cursor-pointer px-3 py-1 rounded-lg transition-colors flex items-center gap-2 ${isPersonActive && !filterStatus ? 'bg-[#2563eb] text-white shadow-sm' : 'hover:bg-black/5'}`}
+                  onClick={() => { setFilterAssignee(isPersonActive && !filterStatus ? 'all' : name); setFilterStatus(null); }}
+                >
+                  <span className="text-[14px] font-bold capitalize">{name}</span>
+                  <span className={`text-[11px] font-black px-2 rounded ${isPersonActive && !filterStatus ? 'bg-white/20' : 'bg-black/5 text-[#64748b]'}`}>{stat.total} task</span>
+                </div>
+                <div className="flex items-center gap-1.5 border-l border-black/5 pl-1.5">
+                   <button 
+                     onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Done' && isPersonActive ? null : 'Done'); }} 
+                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Done' && isPersonActive ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100'}`}
+                   >
+                     <span>{stat.done}</span> <span className="opacity-70">done</span>
+                   </button>
+                   <button 
+                     onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Doing' && isPersonActive ? null : 'Doing'); }} 
+                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Doing' && isPersonActive ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-100'}`}
+                   >
+                     <span>{stat.doing}</span> <span className="opacity-70">doing</span>
+                   </button>
+                   <button 
+                     onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Delay' && isPersonActive ? null : 'Delay'); }} 
+                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Delay' && isPersonActive ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-100'}`}
+                   >
+                     <span>{stat.delayed}</span> <span className="opacity-70">delay</span>
+                   </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {personnelStats.find(s => s[0] === 'Chưa gán') && (
             <button 
-              onClick={() => setFilterAssignee('all')}
-              className="text-[#2563eb] hover:underline cursor-pointer"
+              onClick={() => { setFilterAssignee(filterAssignee === 'Chưa gán' ? 'all' : 'Chưa gán'); setFilterStatus(null); }}
+              className={`flex items-center gap-2 h-11 px-5 rounded-xl border border-dashed transition-all text-[13px] font-bold ${filterAssignee === 'Chưa gán' ? 'bg-slate-700 text-white border-none shadow-md' : 'bg-slate-50 border-slate-300 text-slate-500 hover:bg-slate-100'}`}
             >
-              Hiển thị tất cả
+              <AlertCircle className="h-4 w-4" /> Chưa gán: {personnelStats.find(s => s[0] === 'Chưa gán')![1].total} task
             </button>
           )}
         </div>
-        {personnelStats.length > 0 ? personnelStats.map(([name, stat]) => (
-          <div 
-            key={name} 
-            onClick={() => setFilterAssignee(filterAssignee === name ? 'all' : name)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md border transition-all cursor-pointer shadow-sm group hover:scale-[1.02] ${filterAssignee === name ? 'border-[#2563eb] bg-[#eff6ff] ring-1 ring-[#2563eb]' : 'border-[#e2e8f0] bg-[#ffffff] hover:border-[#2563eb]'}`}
-          >
-            <span className={`text-xs font-bold ${filterAssignee === name ? 'text-[#2563eb]' : 'text-[#334155]'}`}>{name}:</span>
-            <div className="flex items-center gap-1.5">
-               <div className={`flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-bold border ${filterAssignee === name ? 'bg-[#2563eb] text-[#ffffff] border-[#2563eb]' : 'bg-[#eff6ff] text-[#2563eb] border-[#dbeafe]'}`}>
-                  {stat.total} việc
-               </div>
-               {stat.delayed > 0 && (
-                 <div className="flex items-center px-1.5 py-0.5 rounded-md bg-[#fef2f2] text-[#ef4444] text-[10px] font-bold border border-[#fee2e2]">
-                    chậm {stat.delayed}
-                 </div>
-               )}
-            </div>
-          </div>
-        )) : <p className="text-xs text-[#94a3b8] italic">Chưa có dữ liệu thống kê</p>}
       </div>
-      <div className="flex justify-between items-center mb-1">
-        <div>
-          <h1 className="text-2xl font-bold text-[#1e293b]">Quản lý OKR & Tiến độ</h1>
-          <p className="text-[#64748b] text-sm mt-1">Cấu trúc phân cấp: OKR → Đầu việc lớn → Công việc chi tiết</p>
+
+      <div className="flex flex-row justify-between items-center px-2 flex-shrink-0 mt-1">
+        <div className="flex items-center gap-3">
+           <Layers className="h-5 w-5 text-[#2563eb]" />
+           <h1 className="text-base font-bold text-[#1e3a8a] tracking-tight">Nội dung chi tiết OKR</h1>
         </div>
-        <div className="flex gap-2.5 items-center">
+        <div className="flex gap-2">
           {isAdmin && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="bg-[#ffffff] border-[#e2e8f0] text-[#1e293b] rounded-md font-medium">Import Sheet</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Import OKR từ CSV</DialogTitle></DialogHeader>
-                <div className="space-y-4 py-4">
-                  <p className="text-sm text-[#64748b]">Tải lên file CSV.</p>
-                  <input type="file" accept=".csv" onChange={handleFileUpload} className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" />
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button variant="outline" className="h-9 border-white/80 text-[#2563eb] font-bold rounded-xl hover:bg-white text-[12px] px-4 shadow-sm">
+              <FileUp className="h-4 w-4 mr-2" /> Nhập CSV
+            </Button>
           )}
           {isAdmin && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-[#2563eb] text-[#ffffff] rounded-md font-medium hover:bg-[#1d4ed8]">
-                  <Plus className="mr-2 h-4 w-4" /> Thêm OKR
+                <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-5 rounded-xl font-bold text-[12px] shadow-md">
+                  <Plus className="mr-1.5 h-4 w-4" /> Thêm OBJ
                 </Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Thêm OKR mới</DialogTitle></DialogHeader>
+              <DialogContent className="glass-card border-none rounded-[1.5rem] p-6">
+                <DialogHeader><DialogTitle className="text-2xl font-bold text-[#1e3a8a]">Khởi tạo mục tiêu</DialogTitle></DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Tên OKR</Label>
-                    <Input value={newOkrTitle} onChange={(e) => setNewOkrTitle(e.target.value)} placeholder="Nhập tên OKR..." />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Thời hạn OKR</Label>
-                    <Input type="date" value={newOkrDeadline} onChange={(e) => setNewOkrDeadline(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Người thực hiện (Owner)</Label>
-                    <select className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" value={newOkrOwner} onChange={(e) => setNewOkrOwner(e.target.value)}>
-                      <option value="">Chọn</option>
-                      {systemUsers.map(u => (
-                        <option key={u.id} value={u.display_name || u.email}>{u.display_name || u.email}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <Button onClick={() => { addOkr(newOkrTitle, newOkrDeadline || '2026-12-31', newOkrOwner || 'Chưa gán'); setNewOkrTitle(''); setNewOkrDeadline(''); setNewOkrOwner(''); }} className="w-full bg-[#2563eb]">Thêm</Button>
+                  <div className="space-y-1"><Label className="text-[#64748b] text-[11px] uppercase font-black">Tiêu đề</Label><Input value={newOkrTitle} onChange={(e) => setNewOkrTitle(e.target.value)} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1"><Label className="text-[#64748b] text-[11px] uppercase font-black">Thời hạn</Label><Input type="date" value={newOkrDeadline} onChange={(e) => setNewOkrDeadline(e.target.value)} className="h-11 rounded-xl" /></div>
+                  <Button onClick={() => { addOkr(newOkrTitle, newOkrDeadline || '2026-12-31'); setNewOkrTitle(''); setNewOkrDeadline(''); }} className="w-full bg-[#2563eb] h-12 font-bold mt-4 rounded-xl text-lg">Xác nhận tạo OBJ</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -246,324 +258,98 @@ export function OKRTree() {
         </div>
       </div>
 
-
-
-      <Card className="bg-[#ffffff] rounded-xl border border-[#e2e8f0] flex-1 flex flex-col shadow-none overflow-hidden">
-        <div className="bg-[#f1f5f9] px-4 py-2.5 grid grid-cols-[2fr_100px_120px_150px_160px] text-xs font-semibold text-[#64748b] uppercase">
-          <div>Cấu trúc Phân cấp OKR & Công việc</div>
-          <div>Tiến độ</div>
-          <div>Thời hạn</div>
-          <div>Người thực hiện</div>
-          <div>Trạng thái</div>
+      <Card className="glass-card border-none rounded-[2rem] flex-1 flex flex-col shadow-none overflow-hidden min-h-0">
+        <div className="bg-[#2563eb]/5 px-8 py-3.5 grid grid-cols-[3fr_110px_140px_180px_170px] text-[11px] font-black text-[#64748b] uppercase tracking-[0.15em] border-b border-white/20">
+          <div>OBJ -&gt; PLAN -&gt; Công việc chi tiết</div>
+          <div className="text-center">Tiến độ</div>
+          <div className="text-center">Thời hạn</div>
+          <div className="text-center">Nhân sự thực hiện</div>
+          <div className="text-right pr-6">Trạng thái</div>
         </div>
-        <CardContent className="p-0 overflow-y-auto">
+        <CardContent className="p-0 overflow-y-auto scrollbar-hide flex-1">
           <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">
             {filteredOkrs.map((okr) => {
-              const dlStatusOkr = getDeadlineStatus(okr.deadline, okr.progress);
+              const dlStatusOkr = getDeadlineStatus(okr.deadline, okr.progress, okr.completed_at);
               return (
-              <AccordionItem value={okr.id} key={okr.id} className="border-b border-[#e2e8f0]">
-                <AccordionTrigger className={`px-4 py-3 hover:bg-[#f8fafc] border-b border-[#e2e8f0] ${dlStatusOkr.variant === 'destructive' ? 'bg-[#fee2e2]/30' : ''}`}>
-                  <div className="grid grid-cols-[2fr_100px_120px_150px_160px] w-full items-center text-left text-[0.85rem]">
-                    <div className={`flex items-center gap-2 pl-4 font-semibold ${dlStatusOkr.variant === 'destructive' ? 'text-[#ef4444]' : 'text-[#2563eb]'}`}>
-                      <span>OKR: {okr.title}</span>
+              <AccordionItem value={okr.id} key={okr.id} className="border-b border-white/10 last:border-0">
+                <AccordionTrigger className={`px-8 py-5 hover:bg-white/30 transition-colors border-none no-underline ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-50/10' : ''}`}>
+                  <div className="grid grid-cols-[3fr_110px_140px_180px_170px] w-full items-center text-left">
+                    <div className="flex items-center gap-4 font-bold text-[#1e3a8a] text-[15px]">
+                      <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'} animate-pulse`} />
+                      <span className="truncate max-w-[500px]">OBJ: {okr.title}</span>
                     </div>
-                    <div className="font-medium text-[#1e293b]">{okr.progress}%</div>
-                    <div className="flex items-center gap-1 font-medium text-[#475569]">
-                        {okr.deadline}
-                        {dlStatusOkr.variant === 'destructive' && <AlertCircle className="h-3 w-3 text-[#ef4444]" />}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-[#cbd5e1] flex items-center justify-center text-[0.6rem] text-[#ffffff] font-bold">
-                        {(okr.ownerId || 'C').substring(0, 2).toUpperCase()}
-                      </div>
-                      <span className="text-[#1e293b]">{okr.ownerId || 'Chưa gán'}</span>
-                    </div>
-                    <div className="flex justify-between items-center pr-6">
-                      <Badge variant={dlStatusOkr.variant} className="px-2 py-0.5 rounded-full text-[0.7rem] font-medium">{dlStatusOkr.label}</Badge>
+                    <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
+                    <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
+                    <div className="text-[#64748b] text-[11px] font-bold uppercase tracking-widest text-center">-</div>
+                    <div className="flex justify-end items-center pr-2 gap-6">
+                      <Badge className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border-none ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-blue-100 text-[#2563eb]'}`}>
+                        {dlStatusOkr.label}
+                      </Badge>
                       {isAdmin && (
-                        <div className="flex gap-1" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <div className="inline-flex items-center justify-center h-6 w-6 rounded-md hover:bg-[#e2e8f0] cursor-pointer transition-colors" onClick={() => { setEditOkrTitle(okr.title); setEditOkrDeadline(okr.deadline || '2026-12-31'); setEditOkrOwner(okr.ownerId || 'Chưa gán'); }}>
-                                <Edit2 className="h-3 w-3 text-[#64748b]" />
-                              </div>
-                            </DialogTrigger>
-                            <DialogContent onClick={(e) => e.stopPropagation()}>
-                              <DialogHeader><DialogTitle>Sửa OKR</DialogTitle></DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2"><Label>Tên OKR</Label><Input value={editOkrTitle} onChange={(e) => setEditOkrTitle(e.target.value)} /></div>
-                                <div className="space-y-2"><Label>Thời hạn OKR</Label><Input type="date" value={editOkrDeadline} onChange={(e) => setEditOkrDeadline(e.target.value)} /></div>
-                                <div className="space-y-2">
-                                  <Label>Người thực hiện</Label>
-                                  <select className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" value={editOkrOwner} onChange={(e) => setEditOkrOwner(e.target.value)}>
-                                    <option value="">Chọn</option>
-                                    {systemUsers.map(u => (
-                                      <option key={u.id} value={u.display_name || u.email}>{u.display_name || u.email}</option>
-                                    ))}
-                                    <option value="Chưa gán">Chưa gán</option>
-                                  </select>
-                                </div>
-                                <Button onClick={() => updateOkr(okr.id, editOkrTitle, editOkrDeadline, editOkrOwner)} className="w-full bg-[#2563eb]">Lưu thay đổi</Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <div className="inline-flex items-center justify-center h-6 w-6 rounded-md hover:bg-[#fee2e2] cursor-pointer transition-colors">
-                                <Trash2 className="h-3 w-3 text-[#ef4444]" />
-                              </div>
-                            </DialogTrigger>
-                            <DialogContent onClick={(e) => e.stopPropagation()}>
-                              <DialogHeader><DialogTitle>Xác nhận xoá OKR</DialogTitle></DialogHeader>
-                              <div className="py-4"><p className="text-sm text-[#64748b]">Bạn có chắc chắn muốn xoá OKR này?</p></div>
-                              <Button variant="destructive" onClick={() => deleteOkr(okr.id)} className="w-full">Xoá OKR</Button>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b] hover:text-[#2563eb]" onClick={(e) => { e.stopPropagation(); setEditOkrTitle(okr.title); setEditOkrDeadline(okr.deadline || '2026-12-31'); }}><Edit2 className="h-4 w-4" /></Button>
                       )}
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-0 pb-0">
-                  <div className="w-full">
+                <AccordionContent className="pt-0 pb-3 px-3">
+                  <div className="space-y-2">
                     {okr.children.map((bigTask) => {
-                      const dlStatus = getDeadlineStatus(bigTask.deadline, bigTask.progress);
+                      const dlStatus = getDeadlineStatus(bigTask.deadline, bigTask.progress, bigTask.completed_at);
                       return (
-                        <div key={bigTask.id} className={`w-full border-b border-[#e2e8f0] last:border-b-0 ${dlStatus.variant === 'destructive' ? 'bg-[#fee2e2]/20' : ''}`}>
-                          <div className="px-4 py-3 hover:bg-[#f1f5f9] grid grid-cols-[2fr_100px_120px_150px_160px] items-center text-left text-[0.85rem] border-l-[3px] border-[#cbd5e1] ml-2">
-                            <div className="flex items-center gap-2 pl-5 text-[#334155] font-semibold">
-                              <div className="px-1.5 py-0.5 rounded bg-[#e2e8f0] text-[#475569] text-[0.65rem] font-bold uppercase tracking-wider">Đầu việc</div>
-                              <span>{bigTask.title}</span>
+                        <div key={bigTask.id} className="glass-card bg-white/20 border-white/40 rounded-2xl overflow-hidden">
+                          <div className="px-7 py-3.5 grid grid-cols-[3fr_110px_140px_160px_170px] items-center hover:bg-white/30 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <div className="bg-[#1e3a8a] text-white text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider">PLAN</div>
+                              <span className="text-[14px] font-bold text-[#1e3a8a]">{bigTask.title}</span>
                             </div>
-                            <div className="font-semibold text-[#1e293b]">{bigTask.progress}%</div>
-                            <div className="flex items-center gap-1 text-[#475569] font-medium">
-                              {bigTask.deadline}
-                              {dlStatus.variant === 'destructive' && <AlertCircle className="h-3 w-3 text-[#ef4444]" />}
-                            </div>
-                            <div className="text-[#94a3b8]">-</div>
-                            <div className="flex justify-between items-center pr-6">
-                              <Badge variant={dlStatus.variant} className="px-2 py-0.5 rounded-full text-[0.7rem] font-medium">{dlStatus.label}</Badge>
-                              {isAdmin && (
-                                <div className="flex gap-1 ml-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <div className="inline-flex items-center justify-center h-6 w-6 rounded-md hover:bg-[#e2e8f0] cursor-pointer transition-colors" onClick={() => { setNewBtTitle(bigTask.title); setNewBtWeight(bigTask.weight); setNewBtDeadline(bigTask.deadline); }}>
-                                        <Edit2 className="h-3 w-3 text-[#64748b]" />
-                                      </div>
-                                    </DialogTrigger>
-                                    <DialogContent onClick={(e) => e.stopPropagation()}>
-                                      <DialogHeader><DialogTitle>Sửa Đầu việc lớn</DialogTitle></DialogHeader>
-                                      <div className="space-y-4 py-4">
-                                        <div className="space-y-2"><Label>Tên</Label><Input value={newBtTitle} onChange={(e) => setNewBtTitle(e.target.value)} /></div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                          <div className="space-y-2"><Label>Trọng số (%)</Label><Input type="number" value={newBtWeight} onChange={(e) => setNewBtWeight(Number(e.target.value))} /></div>
-                                          <div className="space-y-2"><Label>Thời hạn</Label><Input type="date" value={newBtDeadline} onChange={(e) => setNewBtDeadline(e.target.value)} /></div>
-                                        </div>
-                                        <Button onClick={() => updateBigTask(okr.id, bigTask.id, newBtTitle, newBtWeight, newBtDeadline)} className="w-full bg-[#2563eb]">Lưu</Button>
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <div className="inline-flex items-center justify-center h-6 w-6 rounded-md hover:bg-[#fee2e2] cursor-pointer transition-colors">
-                                        <Trash2 className="h-3 w-3 text-[#ef4444]" />
-                                      </div>
-                                    </DialogTrigger>
-                                    <DialogContent onClick={(e) => e.stopPropagation()}>
-                                      <DialogHeader><DialogTitle>Xác nhận xoá</DialogTitle></DialogHeader>
-                                      <div className="py-4"><p className="text-sm text-[#64748b]">Xoá đầu việc lớn này?</p></div>
-                                      <Button variant="destructive" onClick={() => deleteBigTask(okr.id, bigTask.id)} className="w-full">Xoá</Button>
-                                    </DialogContent>
-                                  </Dialog>
-                                </div>
-                              )}
+                            <div className="text-sm font-black text-[#1e3a8a] text-center">{bigTask.progress}%</div>
+                            <div className={`text-[11px] font-bold ${dlStatus.color} text-center`}>{bigTask.deadline}</div>
+                            <div className="text-[#64748b] text-center">-</div>
+                            <div className="flex justify-end items-center pr-2 gap-4">
+                               <Badge className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase border-none ${dlStatus.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-white/60 text-[#2563eb]'}`}>
+                                {dlStatus.label}
+                               </Badge>
                             </div>
                           </div>
-                          <div className="bg-[#f8fafc] border-y border-[#e2e8f0]">
+                          
+                          <div className="bg-white/5 px-3 py-2 space-y-1.5 border-t border-white/10">
                             {bigTask.children.map((subTask) => {
                               const isHighlighted = highlightTaskId === subTask.id;
-                              const stStatus = getDeadlineStatus(subTask.deadline, subTask.progress);
+                              const stStatus = getDeadlineStatus(subTask.deadline, subTask.progress, subTask.completed_at);
                               return (
-                                <div
-                                  key={subTask.id}
-                                  ref={isHighlighted ? highlightRef : undefined}
-                                  className={`px-4 py-2 hover:bg-[#ffffff] grid grid-cols-[2fr_100px_120px_150px_160px] items-center text-left text-[0.8rem] border-b border-[#e2e8f0] last:border-b-0 transition-colors duration-500 ${isHighlighted ? 'bg-[#fef9c3] ring-2 ring-[#f59e0b] ring-inset' : ''} ${stStatus.variant === 'destructive' ? 'bg-[#fee2e2]/10' : ''}`}
-                                >
-                                  <div className="pl-14 flex flex-col gap-0.5 justify-center">
-                                    <div className="text-[#1e293b] font-medium flex items-center gap-2">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#cbd5e1]"></span>
+                                <div key={subTask.id} ref={isHighlighted ? highlightRef : undefined} className={`px-6 py-3 rounded-xl grid grid-cols-[3fr_110px_140px_160px_170px] items-center hover:bg-white/40 transition-all ${isHighlighted ? 'bg-amber-100 ring-2 ring-amber-400' : ''}`}>
+                                  <div className="pl-6 flex flex-col">
+                                    <div className="text-[14px] font-bold text-[#1e3a8a] flex items-center gap-3">
+                                      <ChevronRight className="h-4 w-4 text-[#64748b]" />
                                       {subTask.title}
                                     </div>
-                                    {subTask.note && <span className="text-[#64748b] text-[0.75rem] ml-3.5 whitespace-pre-wrap break-words leading-relaxed mt-1" title={subTask.note}>{subTask.note}</span>}
-
+                                    {subTask.note && <span className="text-[10px] text-[#64748b] ml-7 mt-1 italic line-clamp-1 leading-relaxed">{subTask.note}</span>}
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Progress value={subTask.progress} indicatorColor={getProgressColor(subTask.progress)} className="h-1.5 w-12 bg-[#e2e8f0]" />
-                                    <span className="font-medium text-[#1e293b]">{subTask.progress}%</span>
+                                  <div className="flex items-center justify-center gap-3">
+                                    <Progress value={subTask.progress} indicatorColor={getProgressColor(subTask.progress)} className="h-2 w-14 bg-white/50" />
+                                    <span className="text-[11px] font-black text-[#1e3a8a]">{subTask.progress}%</span>
                                   </div>
-                                  <div className="text-[#64748b] flex items-center gap-1">
-                                    {subTask.deadline}
-                                    {stStatus.variant === 'destructive' && <AlertCircle className="h-3 w-3 text-[#ef4444]" />}
+                                  <div className={`text-[11px] font-bold ${stStatus.color} text-center`}>{subTask.deadline}</div>
+                                  <div className="flex items-center justify-center gap-3">
+                                     <div className="flex -space-x-1.5">
+                                        {subTask.assignee.split(',').map((name, i) => (
+                                          <div key={i} className="h-7 w-7 rounded-full border-2 border-white text-[8px] flex items-center justify-center text-white font-black shadow-sm bg-blue-500">
+                                            {name.trim().substring(0, 2).toUpperCase()}
+                                          </div>
+                                        ))}
+                                     </div>
+                                     <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex -space-x-2">
-                                      {subTask.assignee.split(',').map((name, idx) => (
-                                        <div key={idx} className="w-6 h-6 rounded-full bg-[#cbd5e1] border-2 border-[#ffffff] flex items-center justify-center text-[0.6rem] text-[#ffffff] font-bold" title={name.trim()}>
-                                          {name.trim().substring(0, 2).toUpperCase()}
-                                        </div>
-                                      ))}
-                                    </div>
-                                    <span className="text-[#1e293b] text-[0.75rem] truncate max-w-[100px]">{subTask.assignee}</span>
-                                  </div>
-                                  <div className="flex justify-between items-center pr-3">
-                                    <Badge variant={stStatus.variant} className="px-2 py-0.5 rounded-full text-[0.7rem] font-medium">
-                                      {stStatus.label}
-                                    </Badge>
-                                    {isAdmin && (
-                                      <div className="flex gap-1">
-                                        <Dialog>
-                                          <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                                              setEditStProgress(subTask.progress); 
-                                              setEditStNote(subTask.note || ''); 
-                                              const assignees = subTask.assignee.split(',').map(a => a.trim());
-                                              setEditStAssignee(assignees[0] || '');
-                                              setEditStAssignee2(assignees[1] || '');
-                                              setEditStDeadline(subTask.deadline); 
-                                              setNewStTitle(subTask.title); 
-                                              setNewStWeight(subTask.weight);
-                                            }}>
-                                              <Edit2 className="h-3 w-3 text-[#64748b]" />
-                                            </Button>
-                                          </DialogTrigger>
-                                          <DialogContent>
-                                            <DialogHeader><DialogTitle>Cập nhật công việc</DialogTitle></DialogHeader>
-                                            <div className="space-y-4 py-4">
-                                              <div className="space-y-2"><Label>Tên</Label><Input value={newStTitle} onChange={(e) => setNewStTitle(e.target.value)} /></div>
-                                              <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2"><Label>Tiến độ (%)</Label><Input type="number" min="0" max="100" value={editStProgress} onChange={(e) => setEditStProgress(Number(e.target.value))} /></div>
-                                                <div className="space-y-2"><Label>Trọng số (%)</Label><Input type="number" value={newStWeight} onChange={(e) => setNewStWeight(Number(e.target.value))} /></div>
-                                              </div>
-                                              <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                  <Label>Người gán 1</Label>
-                                                  <select className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" value={editStAssignee} onChange={(e) => setEditStAssignee(e.target.value)}>
-                                                    <option value="">Chọn</option>
-                                                    {systemUsers.map(u => (
-                                                      <option key={u.id} value={u.display_name || u.email}>{u.display_name || u.email}</option>
-                                                    ))}
-                                                    <option value="Chưa gán">Chưa gán</option>
-                                                  </select>
-                                                </div>
-                                                <div className="space-y-2">
-                                                  <Label>Người gán 2</Label>
-                                                  <select className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" value={editStAssignee2} onChange={(e) => setEditStAssignee2(e.target.value)}>
-                                                    <option value="">Chọn</option>
-                                                    {systemUsers.map(u => (
-                                                      <option key={u.id} value={u.display_name || u.email}>{u.display_name || u.email}</option>
-                                                    ))}
-                                                  </select>
-                                                </div>
-                                              </div>
-                                              <div className="space-y-2"><Label>Thời hạn</Label><Input type="date" value={editStDeadline} onChange={(e) => setEditStDeadline(e.target.value)} /></div>
-                                              <div className="space-y-2"><Label>Ghi chú</Label><Input value={editStNote} onChange={(e) => setEditStNote(e.target.value)} placeholder="Nhập ghi chú..." /></div>
-                                              <Button onClick={() => {
-                                                const combinedAssignees = [editStAssignee, editStAssignee2].filter(a => a && a !== 'Chưa gán').join(', ') || 'Chưa gán';
-                                                updateSubTask(okr.id, bigTask.id, subTask.id, editStProgress, editStNote, combinedAssignees, editStDeadline, newStTitle, newStWeight);
-                                              }} className="w-full bg-[#2563eb]">Lưu</Button>
-                                            </div>
-                                          </DialogContent>
-                                        </Dialog>
-                                        <Dialog>
-                                          <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 hover:bg-[#fee2e2]">
-                                              <Trash2 className="h-3 w-3 text-[#ef4444]" />
-                                            </Button>
-                                          </DialogTrigger>
-                                          <DialogContent>
-                                            <DialogHeader><DialogTitle>Xác nhận xoá</DialogTitle></DialogHeader>
-                                            <div className="py-4"><p className="text-sm text-[#64748b]">Xoá công việc này?</p></div>
-                                            <Button variant="destructive" onClick={() => deleteSubTask(okr.id, bigTask.id, subTask.id)} className="w-full">Xoá</Button>
-                                          </DialogContent>
-                                        </Dialog>
-                                      </div>
-                                    )}
+                                  <div className="flex justify-end pr-2">
+                                     <Badge variant="ghost" className={`text-[9px] font-black uppercase ${stStatus.color} border-none`}>{stStatus.label}</Badge>
                                   </div>
                                 </div>
                               );
                             })}
-                            {isAdmin && (
-                              <div className="px-4 py-2 pl-14">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="text-xs text-[#2563eb] h-7 hover:bg-[#eff6ff]">
-                                      <Plus className="h-3 w-3 mr-1" /> Thêm công việc chi tiết
-                                    </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader><DialogTitle>Thêm công việc chi tiết</DialogTitle></DialogHeader>
-                                    <div className="space-y-4 py-4">
-                                      <div className="space-y-2"><Label>Tên</Label><Input value={newStTitle} onChange={(e) => setNewStTitle(e.target.value)} /></div>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                          <Label>Người gán 1</Label>
-                                          <select className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" value={newStAssignee} onChange={(e) => setNewStAssignee(e.target.value)}>
-                                            <option value="">Chọn</option>
-                                            {systemUsers.map(u => (
-                                              <option key={u.id} value={u.display_name || u.email}>{u.display_name || u.email}</option>
-                                            ))}
-                                          </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                          <Label>Người gán 2</Label>
-                                          <select className="flex h-10 w-full rounded-md border border-[#e2e8f0] bg-[#ffffff] px-3 py-2 text-sm" value={newStAssignee2} onChange={(e) => setNewStAssignee2(e.target.value)}>
-                                            <option value="">Chọn</option>
-                                            {systemUsers.map(u => (
-                                              <option key={u.id} value={u.display_name || u.email}>{u.display_name || u.email}</option>
-                                            ))}
-                                          </select>
-                                        </div>
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2"><Label>Trọng số (%)</Label><Input type="number" value={newStWeight} onChange={(e) => setNewStWeight(Number(e.target.value))} /></div>
-                                        <div className="space-y-2"><Label>Thời hạn</Label><Input type="date" value={newStDeadline} onChange={(e) => setNewStDeadline(e.target.value)} /></div>
-                                      </div>
-                                      <Button onClick={() => { 
-                                        const combinedAssignees = [newStAssignee, newStAssignee2].filter(a => a && a !== 'Chưa gán').join(', ') || 'Chưa gán';
-                                        addSubTask(okr.id, bigTask.id, { title: newStTitle, assignee: combinedAssignees, weight: newStWeight, deadline: newStDeadline, progress: 0, status: 'todo' }); 
-                                        setNewStTitle(''); setNewStAssignee(''); setNewStAssignee2(''); setNewStDeadline(''); 
-                                      }} className="w-full bg-[#2563eb]">Thêm</Button>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
                     })}
-                    {isAdmin && (
-                      <div className="px-4 py-2 pl-9 border-t border-[#e2e8f0]">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-xs text-[#2563eb] h-7 hover:bg-[#eff6ff]">
-                              <Plus className="h-3 w-3 mr-1" /> Thêm Đầu việc lớn
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader><DialogTitle>Thêm Đầu việc lớn</DialogTitle></DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2"><Label>Tên</Label><Input value={newBtTitle} onChange={(e) => setNewBtTitle(e.target.value)} /></div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2"><Label>Trọng số (%)</Label><Input type="number" value={newBtWeight} onChange={(e) => setNewBtWeight(Number(e.target.value))} /></div>
-                                <div className="space-y-2"><Label>Thời hạn</Label><Input type="date" value={newBtDeadline} onChange={(e) => setNewBtDeadline(e.target.value)} /></div>
-                              </div>
-                              <Button onClick={() => { addBigTask(okr.id, { title: newBtTitle, weight: newBtWeight, deadline: newBtDeadline }); setNewBtTitle(''); setNewBtDeadline(''); }} className="w-full bg-[#2563eb]">Thêm</Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>

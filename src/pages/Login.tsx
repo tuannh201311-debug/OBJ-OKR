@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Shield } from 'lucide-react';
+import { Shield, Sparkles, Key, Mail } from 'lucide-react';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -31,7 +31,7 @@ export function Login() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.detail || 'Đăng nhập thất bại.');
+        throw new Error(data.detail || 'Authentication failed.');
       }
 
       const data = await res.json();
@@ -39,41 +39,91 @@ export function Login() {
       await refreshAuth();
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại.');
+      setError(err.message || 'Authentication failed.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-lg border-[#e2e8f0]">
-        <CardHeader className="space-y-2 text-center pb-6">
-          <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 bg-[#eff6ff] rounded-full flex items-center justify-center">
-              <Shield className="h-6 w-6 text-[#2563eb]" />
+    <div className="min-h-screen liquid-gradient flex items-center justify-center p-6 font-fira-sans">
+      <div className="w-full max-w-md relative group">
+        {/* Decorative Background Elements */}
+        <div className="absolute -inset-1 bg-gradient-to-r from-[#2563eb] to-[#60a5fa] rounded-[3rem] blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
+
+        <Card className="glass-card border-none rounded-[3rem] shadow-2xl relative overflow-hidden">
+          <CardHeader className="space-y-4 text-center p-10 pb-6">
+            <div className="flex justify-center mb-2">
+              <div className="h-16 w-16 rounded-[1.5rem] bg-gradient-to-br from-[#2563eb] to-[#60a5fa] flex items-center justify-center shadow-lg shadow-blue-200">
+                <Shield className="h-8 w-8 text-white" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl font-bold text-[#1e293b]">Đăng nhập OKR-TL-9P</CardTitle>
-          <CardDescription className="text-[#64748b]">Hệ thống quản lý tiến độ dự án</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            {error && <p className="text-sm text-[#ef4444] font-medium text-center">{error}</p>}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@example.com" required />
+            <div className="space-y-1">
+              <CardTitle className="text-3xl font-fira-code font-bold text-[#1e3a8a]">Welcome Back</CardTitle>
+              <CardDescription className="text-[#64748b] font-medium flex items-center justify-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" /> 9Pay Strategic Management
+              </CardDescription>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mật khẩu</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+          </CardHeader>
+
+          <CardContent className="p-10 pt-0">
+            <form onSubmit={handleLogin} className="space-y-6">
+              {error && (
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-500 text-xs font-bold text-center animate-in shake-2">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[10px] font-black text-[#64748b] uppercase tracking-widest ml-1">Identity (Email)</Label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@9pay.vn"
+                    required
+                    className="h-14 pl-12 rounded-2xl bg-white/50 border-white/60 focus:bg-white focus:ring-blue-200 transition-all text-[#1e3a8a] font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" title="Password" className="text-[10px] font-black text-[#64748b] uppercase tracking-widest ml-1">Access Key</Label>
+                <div className="relative">
+                  <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="h-14 pl-12 rounded-2xl bg-white/50 border-white/60 focus:bg-white focus:ring-blue-200 transition-all text-[#1e3a8a] font-bold"
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" disabled={loading} className="w-full h-14 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-2xl font-bold text-lg shadow-xl shadow-blue-200 transition-all hover:scale-[1.02] active:scale-[0.98] mt-4">
+                {loading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Authenticating...
+                  </div>
+                ) : 'Sign In'}
+              </Button>
+            </form>
+
+            <div className="mt-8 text-center">
+              <p className="text-[10px] text-[#64748b] font-bold uppercase tracking-widest">
+                Protected by enterprise-grade security
+              </p>
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] mt-2">
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -1,10 +1,16 @@
 import uuid
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+import re
 
 # Helper to generate UUIDs
 def generate_uuid():
     return str(uuid.uuid4())
+
+def validate_date_format(v):
+    if v and not re.match(r'^\d{4}-\d{2}-\d{2}$', v):
+        raise ValueError('Deadline must be in YYYY-MM-DD format')
+    return v
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -36,13 +42,17 @@ class RoleCreate(BaseModel):
 
 # OKR Models
 class OKRBase(BaseModel):
-    title: str
+    title: str = Field(..., min_length=1)
     objective: Optional[str] = ""
     description: Optional[str] = None
     deadline: Optional[str] = "2026-12-31"
-    ownerId: Optional[str] = "Chưa gán"
     target: Optional[str] = "OKR"
-    progress: Optional[float] = 0.0
+    progress: Optional[float] = Field(0.0, ge=0, le=100)
+
+    @field_validator('deadline')
+    @classmethod
+    def check_deadline(cls, v):
+        return validate_date_format(v)
 
 class OKRCreate(OKRBase):
     pass
@@ -51,14 +61,20 @@ class OKRResponse(OKRBase):
     id: str
     user_id: Optional[str] = None
     created_at: Optional[str] = None
+    completed_at: Optional[str] = None
 
 # BigTask Models
 class BigTaskBase(BaseModel):
     okr_id: str
-    title: str
-    weight: float = 0.0
-    progress: Optional[float] = 0.0
+    title: str = Field(..., min_length=1)
+    weight: float = Field(0.0, ge=0)
+    progress: Optional[float] = Field(0.0, ge=0, le=100)
     deadline: Optional[str] = "2026-12-31"
+
+    @field_validator('deadline')
+    @classmethod
+    def check_deadline(cls, v):
+        return validate_date_format(v)
 
 class BigTaskCreate(BigTaskBase):
     pass
@@ -66,17 +82,23 @@ class BigTaskCreate(BigTaskBase):
 class BigTaskResponse(BigTaskBase):
     id: str
     created_at: Optional[str] = None
+    completed_at: Optional[str] = None
 
 # SubTask Models
 class SubTaskBase(BaseModel):
     big_task_id: str
-    title: str
+    title: str = Field(..., min_length=1)
     status: str = "todo"
-    progress: float = 0.0
+    progress: float = Field(0.0, ge=0, le=100)
     assignee: Optional[str] = "Chưa gán"
-    weight: float = 0.0
+    weight: float = Field(0.0, ge=0)
     deadline: Optional[str] = "2026-12-31"
     note: Optional[str] = ""
+
+    @field_validator('deadline')
+    @classmethod
+    def check_deadline(cls, v):
+        return validate_date_format(v)
 
 class SubTaskCreate(SubTaskBase):
     pass
@@ -84,3 +106,23 @@ class SubTaskCreate(SubTaskBase):
 class SubTaskResponse(SubTaskBase):
     id: str
     created_at: Optional[str] = None
+    completed_at: Optional[str] = None
+
+# Weekly Report Models
+class WeeklyReportBase(BaseModel):
+    week_number: int
+    year: int
+    done_tasks: List[dict] = [] # List of {title, okr_title}
+    doing_tasks: List[dict] = [] # List of {title, okr_title}
+    challenges: Optional[str] = ""
+    next_week_plan: Optional[str] = ""
+    ad_hoc_tasks: List[str] = [] # Tasks not in OKR system
+
+class WeeklyReportCreate(WeeklyReportBase):
+    pass
+
+class WeeklyReportResponse(WeeklyReportBase):
+    id: str
+    user_id: str
+    user_name: Optional[str] = None
+    submitted_at: str

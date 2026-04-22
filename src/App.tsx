@@ -10,6 +10,7 @@ import { OKRTree } from "@/pages/OKRTree";
 import { Login } from "@/pages/Login";
 import { Viewer } from "@/pages/Viewer";
 import { Settings } from "@/pages/Settings";
+import { WeeklyReport } from "@/pages/WeeklyReport";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />
               <Route path="okr-tree" element={<OKRTree />} />
+              <Route path="weekly-report" element={<WeeklyReport />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
