@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Network, Settings, Shield, LogOut, FileText, Sparkles, KanbanSquare } from 'lucide-react';
+import { LayoutDashboard, Network, Settings, Shield, LogOut, FileText, Sparkles } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 
@@ -11,7 +11,6 @@ export function Layout() {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard, adminOnly: false },
     { name: 'Quản lý OKR', href: '/okr-tree', icon: Network, adminOnly: false },
-    { name: 'Kanban Board', href: '/kanban', icon: KanbanSquare, adminOnly: false },
     { name: 'Báo cáo tuần', href: '/weekly-report', icon: FileText, adminOnly: false },
     { name: 'Cài đặt hệ thống', href: '/settings', icon: Settings, adminOnly: true },
   ];

@@ -13,8 +13,6 @@ import { Settings } from "@/pages/Settings";
 import { WeeklyReport } from "@/pages/WeeklyReport";
 import NotFound from "./pages/NotFound.tsx";
 
-import { KanbanBoard } from "@/pages/KanbanBoard";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,7 +28,6 @@ const App = () => (
             <Route path="/" element={<Layout />}>
               <Route index element={<Dashboard />} />
               <Route path="okr-tree" element={<OKRTree />} />
-              <Route path="kanban" element={<KanbanBoard />} />
               <Route path="weekly-report" element={<WeeklyReport />} />
               <Route path="settings" element={<Settings />} />
             </Route>
