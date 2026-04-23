@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check, GripVertical, Calendar, Link, Upload, X, Paperclip } from 'lucide-react';
 import { useAppContext, OKR, BigTask, SubTask } from '@/context/AppContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -401,6 +401,9 @@ export function OKRTree() {
                   </div>
                 </DialogTitle>
               </div>
+              <DialogDescription className="text-white/60 text-xs font-medium mt-1">
+                Vui lòng điền đầy đủ thông tin bên dưới để cập nhật hệ thống OKR.
+              </DialogDescription>
             </DialogHeader>
           </div>
 
