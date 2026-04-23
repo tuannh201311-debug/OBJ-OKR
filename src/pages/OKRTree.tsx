@@ -31,19 +31,19 @@ const getDeadlineStatus = (deadline: string, progress: number, completedAt?: str
       compDate.setHours(0, 0, 0, 0);
       dlDate.setHours(0, 0, 0, 0);
       if (compDate > dlDate) {
-        return { label: 'Hoàn thành chậm', variant: 'destructive' as const, color: 'text-rose-500' };
+        return { label: 'Hoàn thành chậm', variant: 'destructive' as const, color: 'text-amber-500', badgeClass: 'bg-gradient-to-r from-amber-50 to-orange-50 text-amber-600 border-amber-200/60 shadow-sm' };
       }
     }
-    return { label: 'Hoàn thành', variant: 'success' as const, color: 'text-emerald-500' };
+    return { label: 'Hoàn thành', variant: 'success' as const, color: 'text-emerald-500', badgeClass: 'bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-600 border-emerald-200/60 shadow-sm' };
   }
   const today = new Date();
-  if (!deadline) return { label: 'Chưa có hạn', variant: 'secondary' as const, color: 'text-slate-400' };
+  if (!deadline) return { label: 'Chưa có hạn', variant: 'secondary' as const, color: 'text-slate-400', badgeClass: 'bg-slate-50 text-slate-500 border-slate-200 shadow-sm' };
   const dlDate = new Date(deadline);
   const diffTime = dlDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { label: 'Quá hạn', variant: 'destructive' as const, color: 'text-rose-500' };
-  if (progress === 0) return { label: 'Chờ thực hiện', variant: 'secondary' as const, color: 'text-slate-400' };
-  return { label: 'Đang làm', variant: 'warning' as const, color: 'text-amber-500' };
+  if (diffDays < 0) return { label: 'Quá hạn', variant: 'destructive' as const, color: 'text-rose-500', badgeClass: 'bg-gradient-to-r from-rose-50 to-red-50 text-rose-600 border-rose-200/60 shadow-sm animate-pulse shadow-rose-500/10' };
+  if (progress === 0) return { label: 'Chờ thực hiện', variant: 'secondary' as const, color: 'text-slate-400', badgeClass: 'bg-slate-50 text-slate-500 border-slate-200 shadow-sm' };
+  return { label: 'Đang làm', variant: 'warning' as const, color: 'text-blue-500', badgeClass: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border-blue-200/60 shadow-sm shadow-blue-500/10' };
 };
 
 const getPersonnelColor = (name: string) => {
@@ -662,7 +662,7 @@ export function OKRTree() {
                                       <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
                                     </div>
                                     <div className="flex justify-end pr-2 gap-1">
-                                      <Badge variant="ghost" className={`text-[9px] font-black uppercase ${stStatus.color} border-none`}>{stStatus.label}</Badge>
+                                      <Badge variant="outline" className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${stStatus.badgeClass}`}>{stStatus.label}</Badge>
                                       {(() => {
                                         const isAssigned = user && subTask.assignee.includes(user.name);
                                         return (isAdmin || isAssigned) && (
