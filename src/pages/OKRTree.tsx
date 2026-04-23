@@ -41,7 +41,7 @@ const getDeadlineStatus = (deadline: string, progress: number, completedAt?: str
   const dlDate = new Date(deadline);
   const diffTime = dlDate.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return { label: 'Quá hạn', variant: 'destructive' as const, color: 'text-rose-500', badgeClass: 'bg-gradient-to-r from-rose-50 to-red-50 text-rose-600 border-rose-200/60 shadow-sm animate-pulse shadow-rose-500/10' };
+  if (diffDays < 0) return { label: 'Quá hạn', variant: 'destructive' as const, color: 'text-rose-500', badgeClass: 'bg-gradient-to-r from-rose-50 to-red-50 text-rose-600 border-rose-200/60 shadow-sm shadow-rose-500/10' };
   if (progress === 0) return { label: 'Chờ thực hiện', variant: 'secondary' as const, color: 'text-slate-400', badgeClass: 'bg-slate-50 text-slate-500 border-slate-200 shadow-sm' };
   return { label: 'Đang làm', variant: 'warning' as const, color: 'text-blue-500', badgeClass: 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border-blue-200/60 shadow-sm shadow-blue-500/10' };
 };
@@ -585,14 +585,14 @@ export function OKRTree() {
                             <GripVertical className="h-4 w-4" />
                           </div>
                         )}
-                        <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'} animate-pulse`} />
+                        <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'}`} />
                         <span className="truncate max-w-[500px]">OBJ: {okr.title}</span>
                       </div>
                       <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
                       <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
                       <div className="text-[#64748b] text-[11px] font-bold uppercase tracking-widest text-center">-</div>
                       <div className="flex justify-end items-center pr-2 gap-2">
-                        <Badge className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border-none ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-blue-100 text-[#2563eb]'}`}>
+                        <Badge variant="outline" className={`px-4 py-1 rounded-lg text-[10px] font-black uppercase ${dlStatusOkr.badgeClass}`}>
                           {dlStatusOkr.label}
                         </Badge>
                         {isAdmin && (
@@ -620,7 +620,7 @@ export function OKRTree() {
                               <div className={`text-[11px] font-bold ${dlStatus.color} text-center`}>{bigTask.deadline}</div>
                               <div className="text-[#64748b] text-center">-</div>
                               <div className="flex justify-end items-center pr-2 gap-2">
-                                <Badge className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase border-none ${dlStatus.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-white/60 text-[#2563eb]'}`}>
+                                <Badge variant="outline" className={`px-3 py-0.5 rounded-lg text-[9px] font-black uppercase ${dlStatus.badgeClass}`}>
                                   {dlStatus.label}
                                 </Badge>
                                 {isAdmin && (
