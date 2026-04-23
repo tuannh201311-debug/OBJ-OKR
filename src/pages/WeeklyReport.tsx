@@ -253,7 +253,6 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
               {[...Array(52)].map((_, i) => <option key={i + 1} value={i + 1}>Tuần {i + 1}</option>)}
             </select>
           </div>
-          </div>
           <div className="flex gap-2">
             {myReport && (
               <Button size="sm" onClick={() => exportMarkdown(myReport)} className="bg-white text-[#2563eb] hover:bg-[#F0F7FF] border border-[#DBEAFE] rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
