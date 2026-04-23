@@ -477,6 +477,18 @@ export function OKRTree() {
                                     <span className={cn("text-sm font-medium", isSelected ? "text-[#6366f1]" : "text-slate-700")}>
                                       {name}
                                     </span>
+                                  </div>
+                                  {isSelected && <Check className="h-4 w-4 text-[#6366f1]" />}
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 <div className="space-y-3">
                   <div className="flex justify-between items-center px-1">
                     <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em]">
@@ -531,11 +543,11 @@ export function OKRTree() {
               >
                 Hủy bỏ
               </Button>
-              <Button
+              <Button 
+                className="flex-[1.5] h-15 rounded-[1.2rem] bg-[#6366f1] hover:bg-[#4f46e5] text-white font-black shadow-xl shadow-[#6366f1]/20 transition-all text-sm flex items-center justify-center gap-3" 
                 onClick={handleAction}
-                className="flex-[2] bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:from-[#4f46e5] hover:to-[#4338ca] h-14 font-bold rounded-2xl text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
               >
-                <Check className="mr-2 h-5 w-5" /> Xác nhận & Lưu
+                <Check className="h-5 w-5" /> Lưu thay đổi
               </Button>
             </div>
           </div>
