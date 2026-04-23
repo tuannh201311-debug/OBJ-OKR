@@ -19,6 +19,9 @@ from auth import (
     get_password_hash, verify_password, create_access_token, get_current_user, get_admin_user
 )
 from database import db
+from telegram_bot import start_telegram_polling, send_telegram_message
+
+start_telegram_polling()
 
 app = FastAPI(title="OKR Management API")
 
@@ -267,6 +270,14 @@ def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_us
         st_doc["completed_at"] = datetime.utcnow().isoformat()
     sub_tasks_collection.insert_one(st_doc)
     st_doc["_id"] = str(st_doc["_id"])
+    
+    # Send Telegram notification
+    assignee = st_doc.get("assignee", "Chưa gán")
+    title = st_doc.get("title", "")
+    deadline = st_doc.get("deadline", "")
+    msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
+    send_telegram_message(msg)
+    
     return st_doc
 
 @app.put("/api/sub-tasks/{sub_task_id}", response_model=SubTaskResponse)
