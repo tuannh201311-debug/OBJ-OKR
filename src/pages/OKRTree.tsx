@@ -205,16 +205,16 @@ export function OKRTree() {
     }
   };
 
-  const handleAction = () => {
+  const handleAction = async () => {
     if (!formTitle) return toast.error('Vui lòng nhập tiêu đề');
 
     try {
-      if (dialogType === 'add-okr') addOkr(formTitle, formDeadline);
-      if (dialogType === 'edit-okr') updateOkr(okrToEdit.id, formTitle, formDeadline);
-      if (dialogType === 'add-bt') addBigTask(targetOkrId!, { title: formTitle, weight: formWeight, deadline: formDeadline });
-      if (dialogType === 'edit-bt') updateBigTask(targetOkrId!, btToEdit.id, formTitle, formWeight, formDeadline);
-      if (dialogType === 'add-st') addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote, attachments: formAttachments });
-      if (dialogType === 'edit-st') updateSubTask(targetOkrId!, targetBtId!, stToEdit.id, formProgress, formNote, formAssignee.join(', '), formDeadline, formTitle, formWeight, formAttachments);
+      if (dialogType === 'add-okr') await addOkr(formTitle, formDeadline);
+      if (dialogType === 'edit-okr') await updateOkr(okrToEdit.id, formTitle, formDeadline);
+      if (dialogType === 'add-bt') await addBigTask(targetOkrId!, { title: formTitle, weight: formWeight, deadline: formDeadline });
+      if (dialogType === 'edit-bt') await updateBigTask(targetOkrId!, btToEdit.id, formTitle, formWeight, formDeadline);
+      if (dialogType === 'add-st') await addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote, attachments: formAttachments });
+      if (dialogType === 'edit-st') await updateSubTask(targetOkrId!, targetBtId!, stToEdit.id, formProgress, formNote, formAssignee.join(', '), formDeadline, formTitle, formWeight, formAttachments);
 
       setDialogType(null);
       toast.success('Thao tác thành công');

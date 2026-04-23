@@ -252,42 +252,41 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
-  const saveOkr = (okr: OKR) => {
+  const saveOkr = async (okr: OKR) => {
     const recalculated = recalculateOkr(okr);
     setOkrs(prev => {
       const idx = prev.findIndex(o => o.id === recalculated.id);
-      let next;
       if (idx >= 0) {
-        next = [...prev];
+        const next = [...prev];
         next[idx] = recalculated;
+        return next;
       } else {
-        next = [...prev, recalculated];
+        return [...prev, recalculated];
       }
-      syncOkrsToDb([recalculated]);
-      return next;
     });
+    await syncOkrsToDb([recalculated]);
   };
 
-  const addOkr = (title: string, deadline: string) => {
-    saveOkr({ id: crypto.randomUUID(), title, type: 'OKR', progress: 0, deadline, children: [] });
+  const addOkr = async (title: string, deadline: string) => {
+    await saveOkr({ id: crypto.randomUUID(), title, type: 'OKR', progress: 0, deadline, children: [] });
   };
-  const updateOkr = (okrId: string, title: string, deadline: string) => {
+  const updateOkr = async (okrId: string, title: string, deadline: string) => {
     const okr = okrs.find(o => o.id === okrId);
     if (okr) {
-      saveOkr({ ...okr, title, deadline });
+      await saveOkr({ ...okr, title, deadline });
     }
   };
   const deleteOkr = async (okrId: string) => {
     await fetchWithAuth(`/okrs/${okrId}`, { method: 'DELETE' });
     setOkrs(prev => prev.filter(o => o.id !== okrId));
   };
-  const addBigTask = (okrId: string, task: Omit<BigTask, 'id' | 'children' | 'progress'>) => {
+  const addBigTask = async (okrId: string, task: Omit<BigTask, 'id' | 'children' | 'progress'>) => {
     const okr = okrs.find(o => o.id === okrId);
-    if (okr) saveOkr({ ...okr, children: [...okr.children, { ...task, id: crypto.randomUUID(), progress: 0, children: [] }] });
+    if (okr) await saveOkr({ ...okr, children: [...okr.children, { ...task, id: crypto.randomUUID(), progress: 0, children: [] }] });
   };
-  const updateBigTask = (okrId: string, btId: string, title: string, weight: number, deadline: string) => {
+  const updateBigTask = async (okrId: string, btId: string, title: string, weight: number, deadline: string) => {
     const okr = okrs.find(o => o.id === okrId);
-    if (okr) saveOkr({ ...okr, children: okr.children.map(bt => bt.id === btId ? { ...bt, title, weight, deadline } : bt) });
+    if (okr) await saveOkr({ ...okr, children: okr.children.map(bt => bt.id === btId ? { ...bt, title, weight, deadline } : bt) });
   };
   const deleteBigTask = async (okrId: string, btId: string) => {
     await fetchWithAuth(`/big-tasks/${btId}`, { method: 'DELETE' });
@@ -297,13 +296,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setOkrs(prev => prev.map(o => o.id === okrId ? recalculateOkr(updated) : o));
     }
   };
-  const addSubTask = (okrId: string, btId: string, task: Omit<SubTask, 'id'>) => {
+  const addSubTask = async (okrId: string, btId: string, task: Omit<SubTask, 'id'>) => {
     const okr = okrs.find(o => o.id === okrId);
-    if (okr) saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: [...bt.children, { ...task, id: crypto.randomUUID() }] }) });
+    if (okr) await saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: [...bt.children, { ...task, id: crypto.randomUUID() }] }) });
   };
-  const updateSubTask = (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number, attachments?: string[]) => {
+  const updateSubTask = async (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number, attachments?: string[]) => {
     const okr = okrs.find(o => o.id === okrId);
-    if (okr) saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: bt.children.map(st => {
+    if (okr) await saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: bt.children.map(st => {
       if (st.id === stId) {
         let newCompletedAt = st.completed_at;
         if (progress === 100 && st.progress < 100) {
