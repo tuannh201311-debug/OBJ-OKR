@@ -172,6 +172,17 @@ def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_admin_use
         existing["_id"] = str(existing["_id"])
     return existing
 
+class ReorderItem(BaseModel):
+    id: str
+    order: int
+
+@app.post("/api/okrs/reorder")
+def reorder_okrs(items: List[ReorderItem], user_id: str = Depends(get_admin_user)):
+    for item in items:
+        okrs_collection.update_one({"id": item.id}, {"$set": {"order": item.order}})
+    return {"status": "ok"}
+
+
 @app.delete("/api/okrs/{okr_id}")
 def delete_okr(okr_id: str, user_id: str = Depends(get_admin_user)):
     okrs_collection.delete_one({"id": okr_id})

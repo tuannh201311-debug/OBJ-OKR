@@ -41,6 +41,7 @@ interface AppContextType {
   syncOkrsToDb: (okrs: OKR[]) => Promise<void>;
   loadOkrsFromDb: () => Promise<void>;
   refreshAuth: () => Promise<void>;
+  reorderOkrs: (newOkrs: OKR[]) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -143,7 +144,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const okrRows = await okrRes.json();
+      const okrRows = (await okrRes.json()).sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
       const btRows = await btRes.json();
       const stRows = await stRes.json();
 
@@ -328,6 +329,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setOkrs(prev => [...prev, ...recalculated]);
   };
 
+  const reorderOkrs = async (newOkrs: OKR[]) => {
+    setOkrs(newOkrs);
+    const items = newOkrs.map((okr, index) => ({ id: okr.id, order: index }));
+    await fetchWithAuth('/okrs/reorder', {
+      method: 'POST',
+      body: JSON.stringify(items)
+    });
+  };
+
   return (
     <AppContext.Provider value={{
       user, loading, logout, okrs, setOkrs,
@@ -335,7 +345,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       addBigTask, updateBigTask, deleteBigTask,
       addSubTask, updateSubTask, deleteSubTask,
       importOkrs, highlightTaskId, setHighlightTaskId,
-      systemUsers, syncOkrsToDb, loadOkrsFromDb, refreshAuth
+      systemUsers, syncOkrsToDb, loadOkrsFromDb, refreshAuth, reorderOkrs
     }}>
       {children}
     </AppContext.Provider>

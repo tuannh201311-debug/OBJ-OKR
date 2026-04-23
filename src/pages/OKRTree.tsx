@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check } from 'lucide-react';
+import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check, GripVertical } from 'lucide-react';
 import { useAppContext, OKR, BigTask, SubTask } from '@/context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -66,9 +66,10 @@ const getPersonnelColor = (name: string) => {
 };
 
 export function OKRTree() {
-  const { okrs, user, addOkr, updateOkr, deleteOkr, highlightTaskId, setHighlightTaskId, importOkrs } = useAppContext();
+  const { okrs, user, addOkr, updateOkr, deleteOkr, highlightTaskId, setHighlightTaskId, importOkrs, reorderOkrs, setOkrs } = useAppContext();
   const isAdmin = user?.role === 'admin';
   const highlightRef = useRef<HTMLDivElement>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const [newOkrTitle, setNewOkrTitle] = useState('');
   const [newOkrDeadline, setNewOkrDeadline] = useState('');
@@ -211,6 +212,27 @@ export function OKRTree() {
     } catch (e) {
       toast.error('Lỗi khi lưu dữ liệu');
     }
+  };
+
+  const handleDragStart = (index: number) => {
+    if (!isAdmin) return;
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    const newOkrs = [...okrs];
+    const item = newOkrs.splice(draggedIndex, 1)[0];
+    newOkrs.splice(index, 0, item);
+    setOkrs(newOkrs);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = async () => {
+    setDraggedIndex(null);
+    await reorderOkrs(okrs);
   };
 
   return (
@@ -509,13 +531,26 @@ export function OKRTree() {
         </div>
         <CardContent className="p-0 overflow-y-auto scrollbar-hide flex-1">
           <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue} className="w-full">
-            {filteredOkrs.map((okr) => {
+            {filteredOkrs.map((okr, index) => {
               const dlStatusOkr = getDeadlineStatus(okr.deadline, okr.progress, okr.completed_at);
               return (
-              <AccordionItem value={okr.id} key={okr.id} className="border-b border-white/10 last:border-0">
+              <AccordionItem 
+                value={okr.id} 
+                key={okr.id} 
+                className={`border-b border-white/10 last:border-0 ${draggedIndex === index ? 'opacity-30' : ''}`}
+                draggable={isAdmin}
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+              >
                 <AccordionTrigger className={`px-8 py-5 hover:bg-white/30 transition-colors border-none no-underline ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-50/10' : ''}`}>
                   <div className="grid grid-cols-[3fr_110px_140px_180px_170px] w-full items-center text-left">
                     <div className="flex items-center gap-4 font-bold text-[#1e3a8a] text-[15px]">
+                      {isAdmin && (
+                        <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-blue-500 transition-colors mr-1">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      )}
                       <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'} animate-pulse`} />
                       <span className="truncate max-w-[500px]">OBJ: {okr.title}</span>
                     </div>
