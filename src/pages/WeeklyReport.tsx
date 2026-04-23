@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CheckCircle2, Circle, Clock, AlertCircle, FileText, Download, Calendar, Plus, Trash2, Search, Layers, Users, Sparkles, Send, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 interface TaskInfo {
   id: string;
@@ -179,6 +181,30 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
     toast.success('Đã sao chép nội dung Markdown');
   };
 
+  const exportToPDF = () => {
+    const element = document.getElementById('report-content-area');
+    if (!element) {
+      toast.error('Không tìm thấy nội dung để xuất PDF');
+      return;
+    }
+    
+    const opt = {
+      margin:       [10, 10, 10, 10],
+      filename:     `Bao_Cao_Tuan_${selectedWeek}_${selectedYear}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    toast.info("Đang tạo file PDF...");
+    html2pdf().set(opt).from(element).save().then(() => {
+        toast.success("Đã tải xuống file PDF thành công!");
+    }).catch((err: any) => {
+        console.error(err);
+        toast.error("Lỗi khi tạo PDF: " + err.message);
+    });
+  };
+
   if (!user) {
     return (
       <div className="h-[calc(100vh-80px)] flex items-center justify-center p-4">
@@ -227,24 +253,25 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
               {[...Array(52)].map((_, i) => <option key={i + 1} value={i + 1}>Tuần {i + 1}</option>)}
             </select>
           </div>
-          {myReport && (
-            <div className="flex gap-2">
+          </div>
+          <div className="flex gap-2">
+            {myReport && (
               <Button size="sm" onClick={() => exportMarkdown(myReport)} className="bg-white text-[#2563eb] hover:bg-[#F0F7FF] border border-[#DBEAFE] rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
                 <Download className="h-4 w-4 mr-2" />
                 Markdown
               </Button>
-              <Button size="sm" onClick={() => window.print()} className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
-                <FileText className="h-4 w-4 mr-2" />
-                Xuất PDF
-              </Button>
-            </div>
-          )}
+            )}
+            <Button size="sm" onClick={exportToPDF} className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
+              <FileText className="h-4 w-4 mr-2" />
+              Xuất PDF
+            </Button>
+          </div>
         </div>
       </header>
 
       <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-4' : ''} print:block gap-4 flex-1 overflow-hidden print:overflow-visible`}>
         {/* Main Content Area - Scrollable */}
-        <main className={`${isAdmin ? 'lg:col-span-3' : 'w-full'} flex flex-col gap-4 overflow-hidden print:overflow-visible`}>
+        <main className={`${isAdmin ? 'lg:col-span-3' : 'w-full'} flex flex-col gap-4 overflow-hidden print:overflow-visible`} id="report-content-area">
           <Card className="glass-card border-none rounded-[2rem] shadow-none flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <CardHeader className="p-6 pb-2 border-b border-white/20 flex-shrink-0">
               <div className="flex items-center justify-between">
