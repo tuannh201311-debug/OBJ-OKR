@@ -375,22 +375,22 @@ export function OKRTree() {
       </div>
 
       <Dialog open={!!dialogType} onOpenChange={(open) => !open && setDialogType(null)}>
-        <DialogContent className="border-none rounded-[2.5rem] p-0 overflow-hidden max-w-xl bg-white/95 backdrop-blur-xl shadow-2xl">
-          <div className="bg-gradient-to-br from-[#4f46e5] via-[#6366f1] to-[#8b5cf6] p-10 text-white relative overflow-hidden">
+        <DialogContent className="border-none rounded-[2rem] p-0 overflow-hidden max-w-lg bg-white/95 backdrop-blur-xl shadow-2xl">
+          <div className="bg-gradient-to-br from-[#4f46e5] via-[#6366f1] to-[#8b5cf6] p-6 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#a855f7]/30 rounded-full -ml-24 -mb-24 blur-2xl" />
             
             <DialogHeader className="relative z-10">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-3xl font-bold flex items-center gap-5">
-                  <div className="h-16 w-16 rounded-[1.5rem] bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl border border-white/30 group-hover:scale-105 transition-transform duration-500">
-                    {dialogType?.includes('add') ? <Plus className="h-8 w-8 text-white drop-shadow-md" /> : <Edit2 className="h-8 w-8 text-white drop-shadow-md" />}
+                <DialogTitle className="text-2xl font-bold flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-[1.2rem] bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl border border-white/30 group-hover:scale-105 transition-transform duration-500">
+                    {dialogType?.includes('add') ? <Plus className="h-6 w-6 text-white drop-shadow-md" /> : <Edit2 className="h-6 w-6 text-white drop-shadow-md" />}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black opacity-80 tracking-[0.3em] uppercase mb-1.5 drop-shadow-sm">
+                    <span className="text-[9px] font-black opacity-80 tracking-[0.3em] uppercase mb-1 drop-shadow-sm">
                       {dialogType?.includes('okr') ? 'Strategic Objective' : dialogType?.includes('bt') ? 'Action Plan' : 'Execution Task'}
                     </span>
-                    <span className="text-2xl font-black tracking-tight drop-shadow-md">
+                    <span className="text-xl font-black tracking-tight drop-shadow-md">
                       {dialogType === 'add-okr' && 'Khởi tạo OBJ'}
                       {dialogType === 'edit-okr' && 'Chỉnh sửa OBJ'}
                       {dialogType === 'add-bt' && 'Thêm PLAN mới'}
@@ -407,8 +407,8 @@ export function OKRTree() {
             </DialogHeader>
           </div>
 
-          <div className="p-8 space-y-6 bg-[#f8fafc]/50">
-            <div className="space-y-3">
+          <div className="p-6 space-y-5 bg-[#f8fafc]/50 max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+            <div className="space-y-2">
               <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
                 <Layers className="h-4 w-4 text-[#6366f1]" /> Nội dung chi tiết
               </Label>
@@ -416,7 +416,7 @@ export function OKRTree() {
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 disabled={!isAdmin}
-                className="w-full min-h-[100px] p-5 rounded-[1.5rem] bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all text-[15px] font-bold text-[#1e293b] placeholder:text-slate-300 shadow-sm outline-none leading-relaxed disabled:opacity-70 disabled:bg-slate-50"
+                className="w-full min-h-[80px] p-4 rounded-[1.2rem] bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all text-[14px] font-bold text-[#1e293b] placeholder:text-slate-300 shadow-sm outline-none leading-relaxed disabled:opacity-70 disabled:bg-slate-50"
                 placeholder="Nhập nội dung chi tiết tại đây..."
               />
             </div>
@@ -432,7 +432,7 @@ export function OKRTree() {
                     value={formDeadline}
                     onChange={(e) => setFormDeadline(e.target.value)}
                     disabled={!isAdmin}
-                    className="h-14 rounded-[1.2rem] bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-bold text-[#1e293b] disabled:opacity-70 disabled:bg-slate-50"
+                    className="h-12 rounded-[1rem] bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-4 shadow-sm font-bold text-[#1e293b] disabled:opacity-70 disabled:bg-slate-50"
                   />
                 </div>
               </div>
@@ -446,7 +446,7 @@ export function OKRTree() {
                     value={formWeight}
                     onChange={(e) => setFormWeight(Number(e.target.value))}
                     disabled={!isAdmin}
-                    className="h-14 rounded-[1.2rem] bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-fira-code text-lg font-black text-[#6366f1] disabled:opacity-70 disabled:bg-slate-50"
+                    className="h-12 rounded-[1rem] bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-4 shadow-sm font-fira-code text-base font-black text-[#6366f1] disabled:opacity-70 disabled:bg-slate-50"
                     min={0.1}
                     step={0.1}
                   />
@@ -596,22 +596,22 @@ export function OKRTree() {
                 </div>
               </div>
             )}
+          </div>
 
-            <div className="pt-8 flex gap-4">
-              <Button 
-                variant="outline" 
-                className="flex-1 h-15 rounded-[1.2rem] border-[#e2e8f0] text-[#64748b] font-bold hover:bg-slate-50 transition-all text-sm" 
-                onClick={() => setDialogType(null)}
-              >
-                Hủy bỏ
-              </Button>
-              <Button 
-                className="flex-[1.5] h-15 rounded-[1.2rem] bg-[#6366f1] hover:bg-[#4f46e5] text-white font-black shadow-xl shadow-[#6366f1]/20 transition-all text-sm flex items-center justify-center gap-3" 
-                onClick={handleAction}
-              >
-                <Check className="h-5 w-5" /> Lưu thay đổi
-              </Button>
-            </div>
+          <div className="p-5 border-t border-slate-100 bg-white flex gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-12 rounded-[1rem] border-[#e2e8f0] text-[#64748b] font-bold hover:bg-slate-50 transition-all text-sm" 
+              onClick={() => setDialogType(null)}
+            >
+              Hủy bỏ
+            </Button>
+            <Button 
+              className="flex-[1.5] h-12 rounded-[1rem] bg-[#6366f1] hover:bg-[#4f46e5] text-white font-black shadow-lg shadow-[#6366f1]/20 transition-all text-sm flex items-center justify-center gap-3" 
+              onClick={handleAction}
+            >
+              <Check className="h-5 w-5" /> Lưu thay đổi
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
