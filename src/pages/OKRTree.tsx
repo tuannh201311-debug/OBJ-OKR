@@ -99,13 +99,13 @@ export function OKRTree() {
   const filteredOkrs = useMemo(() => {
     let result = okrs;
     if (searchQuery) {
-        result = result.map(okr => {
-            const filteredBTs = okr.children.map(bt => {
-                const filteredSTs = bt.children.filter(st => st.title.toLowerCase().includes(searchQuery.toLowerCase()));
-                return { ...bt, children: filteredSTs };
-            }).filter(bt => bt.children.length > 0 || bt.title.toLowerCase().includes(searchQuery.toLowerCase()));
-            return { ...okr, children: filteredBTs };
-        }).filter(okr => okr.children.length > 0 || okr.title.toLowerCase().includes(searchQuery.toLowerCase()));
+      result = result.map(okr => {
+        const filteredBTs = okr.children.map(bt => {
+          const filteredSTs = bt.children.filter(st => st.title.toLowerCase().includes(searchQuery.toLowerCase()));
+          return { ...bt, children: filteredSTs };
+        }).filter(bt => bt.children.length > 0 || bt.title.toLowerCase().includes(searchQuery.toLowerCase()));
+        return { ...okr, children: filteredBTs };
+      }).filter(okr => okr.children.length > 0 || okr.title.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     if (filterAssignee === 'all' && !filterStatus) return result;
     return result.map(okr => {
@@ -180,7 +180,7 @@ export function OKRTree() {
     setDialogType(type);
     setTargetOkrId(okrId || null);
     setTargetBtId(btId || null);
-    
+
     if (item) {
       setFormTitle(item.title || '');
       setFormDeadline(item.deadline || '2026-12-31');
@@ -188,7 +188,7 @@ export function OKRTree() {
       setFormProgress(item.progress || 0);
       setFormNote(item.note || '');
       setFormAssignee(item.assignee ? item.assignee.split(',').map((s: string) => s.trim()) : []);
-      
+
       if (type === 'edit-okr') setOkrToEdit(item);
       if (type === 'edit-bt') setBtToEdit(item);
       if (type === 'edit-st') setStToEdit(item);
@@ -204,7 +204,7 @@ export function OKRTree() {
 
   const handleAction = () => {
     if (!formTitle) return toast.error('Vui lòng nhập tiêu đề');
-    
+
     try {
       if (dialogType === 'add-okr') addOkr(formTitle, formDeadline);
       if (dialogType === 'edit-okr') updateOkr(okrToEdit.id, formTitle, formDeadline);
@@ -212,7 +212,7 @@ export function OKRTree() {
       if (dialogType === 'edit-bt') updateBigTask(targetOkrId!, btToEdit.id, formTitle, formWeight, formDeadline);
       if (dialogType === 'add-st') addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote });
       if (dialogType === 'edit-st') updateSubTask(targetOkrId!, targetBtId!, stToEdit.id, formProgress, formNote, formAssignee.join(', '), formDeadline, formTitle, formWeight);
-      
+
       setDialogType(null);
       toast.success('Thao tác thành công');
     } catch (e) {
@@ -228,7 +228,7 @@ export function OKRTree() {
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
-    
+
     const newOkrs = [...okrs];
     const item = newOkrs.splice(draggedIndex, 1)[0];
     newOkrs.splice(index, 0, item);
@@ -243,7 +243,7 @@ export function OKRTree() {
 
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col gap-3 font-inter overflow-hidden px-2">
-      
+
       {/* Phân bổ nguồn lực */}
       <div className="glass-card p-4 rounded-[1.5rem] flex flex-col gap-3 shadow-sm flex-shrink-0">
         <div className="flex items-center justify-between gap-4 border-b border-white/20 pb-3">
@@ -255,17 +255,17 @@ export function OKRTree() {
           </div>
           <div className="relative w-[350px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
-            <Input 
-              placeholder="Tìm nhanh mục tiêu..." 
-              className="pl-10 h-10 bg-white/60 border-white/80 text-[14px] rounded-xl focus:bg-white transition-all shadow-none" 
+            <Input
+              placeholder="Tìm nhanh mục tiêu..."
+              className="pl-10 h-10 bg-white/60 border-white/80 text-[14px] rounded-xl focus:bg-white transition-all shadow-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-2 max-h-[120px] overflow-y-auto pr-2 scrollbar-hide">
-          <button 
+          <button
             onClick={() => { setFilterAssignee('all'); setFilterStatus(null); }}
             className={`flex items-center justify-center gap-2 h-11 px-6 rounded-xl border transition-all text-[13px] font-black ${filterAssignee === 'all' && !filterStatus ? 'bg-[#1e3a8a] text-white border-none shadow-md scale-105' : 'bg-white/60 border-white/80 text-[#1e3a8a] hover:bg-white'}`}
           >
@@ -279,7 +279,7 @@ export function OKRTree() {
 
             return (
               <div key={name} className={`flex items-center gap-3 h-11 px-4 rounded-xl border transition-all ${isPersonActive ? 'bg-white border-blue-200 shadow-sm ring-1 ring-blue-50' : `${colorClass} border-white/60`}`}>
-                <div 
+                <div
                   className={`cursor-pointer px-3 py-1 rounded-lg transition-colors flex items-center gap-2 ${isPersonActive && !filterStatus ? 'bg-[#2563eb] text-white shadow-sm' : 'hover:bg-black/5'}`}
                   onClick={() => { setFilterAssignee(isPersonActive && !filterStatus ? 'all' : name); setFilterStatus(null); }}
                 >
@@ -287,31 +287,31 @@ export function OKRTree() {
                   <span className={`text-[11px] font-black px-2 rounded ${isPersonActive && !filterStatus ? 'bg-white/20' : 'bg-black/5 text-[#64748b]'}`}>{stat.total} task</span>
                 </div>
                 <div className="flex items-center gap-1.5 border-l border-black/5 pl-1.5">
-                   <button 
-                     onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Done' && isPersonActive ? null : 'Done'); }} 
-                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Done' && isPersonActive ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100'}`}
-                   >
-                     <span>{stat.done}</span> <span className="opacity-70">done</span>
-                   </button>
-                   <button 
-                     onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Doing' && isPersonActive ? null : 'Doing'); }} 
-                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Doing' && isPersonActive ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-100'}`}
-                   >
-                     <span>{stat.doing}</span> <span className="opacity-70">doing</span>
-                   </button>
-                   <button 
-                     onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Delay' && isPersonActive ? null : 'Delay'); }} 
-                     className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Delay' && isPersonActive ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-100'}`}
-                   >
-                     <span>{stat.delayed}</span> <span className="opacity-70">delay</span>
-                   </button>
+                  <button
+                    onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Done' && isPersonActive ? null : 'Done'); }}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Done' && isPersonActive ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100'}`}
+                  >
+                    <span>{stat.done}</span> <span className="opacity-70">done</span>
+                  </button>
+                  <button
+                    onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Doing' && isPersonActive ? null : 'Doing'); }}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Doing' && isPersonActive ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-100'}`}
+                  >
+                    <span>{stat.doing}</span> <span className="opacity-70">doing</span>
+                  </button>
+                  <button
+                    onClick={() => { setFilterAssignee(name); setFilterStatus(filterStatus === 'Delay' && isPersonActive ? null : 'Delay'); }}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase flex items-center gap-1.5 transition-all ${filterStatus === 'Delay' && isPersonActive ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-100'}`}
+                  >
+                    <span>{stat.delayed}</span> <span className="opacity-70">delay</span>
+                  </button>
                 </div>
               </div>
             );
           })}
 
           {personnelStats.find(s => s[0] === 'Chưa gán') && (
-            <button 
+            <button
               onClick={() => { setFilterAssignee(filterAssignee === 'Chưa gán' ? 'all' : 'Chưa gán'); setFilterStatus(null); }}
               className={`flex items-center gap-2 h-11 px-5 rounded-xl border border-dashed transition-all text-[13px] font-bold ${filterAssignee === 'Chưa gán' ? 'bg-slate-700 text-white border-none shadow-md' : 'bg-slate-50 border-slate-300 text-slate-500 hover:bg-slate-100'}`}
             >
@@ -323,8 +323,8 @@ export function OKRTree() {
 
       <div className="flex flex-row justify-between items-center px-2 flex-shrink-0 mt-1">
         <div className="flex items-center gap-3">
-           <Layers className="h-5 w-5 text-[#2563eb]" />
-           <h1 className="text-base font-bold text-[#1e3a8a] tracking-tight">Nội dung chi tiết OKR</h1>
+          <Layers className="h-5 w-5 text-[#2563eb]" />
+          <h1 className="text-base font-bold text-[#1e3a8a] tracking-tight">Nội dung chi tiết OKR</h1>
         </div>
         <div className="flex gap-2">
           {isAdmin && (
@@ -333,7 +333,7 @@ export function OKRTree() {
             </Button>
           )}
           {isAdmin && (
-            <Button 
+            <Button
               className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-5 rounded-xl font-bold text-[12px] shadow-md"
               onClick={() => openDialog('add-okr')}
             >
@@ -345,21 +345,21 @@ export function OKRTree() {
 
       <Dialog open={!!dialogType} onOpenChange={(open) => !open && setDialogType(null)}>
         <DialogContent className="border-none rounded-[2.5rem] p-0 overflow-hidden max-w-xl bg-white/95 backdrop-blur-xl shadow-2xl">
-          <div className="bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] p-10 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl animate-pulse" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#9333ea]/30 rounded-full -ml-10 -mb-10 blur-2xl" />
+          <div className="bg-gradient-to-br from-[#4f46e5] via-[#6366f1] to-[#8b5cf6] p-10 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#a855f7]/30 rounded-full -ml-24 -mb-24 blur-2xl" />
             
             <DialogHeader className="relative z-10">
               <div className="flex items-center justify-between">
                 <DialogTitle className="text-3xl font-bold flex items-center gap-5">
-                  <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/30">
-                    {dialogType?.includes('add') ? <Plus className="h-7 w-7 text-white" /> : <Edit2 className="h-7 w-7 text-white" />}
+                  <div className="h-16 w-16 rounded-[1.5rem] bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-2xl border border-white/30 group-hover:scale-105 transition-transform duration-500">
+                    {dialogType?.includes('add') ? <Plus className="h-8 w-8 text-white drop-shadow-md" /> : <Edit2 className="h-8 w-8 text-white drop-shadow-md" />}
                   </div>
-                  <div>
-                    <span className="block text-[11px] font-black opacity-70 tracking-[0.2em] uppercase mb-1.5">
-                      {dialogType?.includes('okr') ? 'Strategic Objective' : dialogType?.includes('bt') ? 'Action Plan' : 'Detailed Task'}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black opacity-80 tracking-[0.3em] uppercase mb-1.5 drop-shadow-sm">
+                      {dialogType?.includes('okr') ? 'Strategic Objective' : dialogType?.includes('bt') ? 'Action Plan' : 'Execution Task'}
                     </span>
-                    <span className="text-2xl tracking-tight">
+                    <span className="text-2xl font-black tracking-tight drop-shadow-md">
                       {dialogType === 'add-okr' && 'Khởi tạo OBJ'}
                       {dialogType === 'edit-okr' && 'Chỉnh sửa OBJ'}
                       {dialogType === 'add-bt' && 'Thêm PLAN mới'}
@@ -373,47 +373,48 @@ export function OKRTree() {
             </DialogHeader>
           </div>
 
+          <div className="p-8 space-y-6 bg-[#f8fafc]/50">
             <div className="space-y-3">
-              <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
-                <Layers className="h-3.5 w-3.5 text-[#6366f1]" /> Tiêu đề nội dung
+              <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
+                <Layers className="h-4 w-4 text-[#6366f1]" /> Nội dung chi tiết
               </Label>
-              <Input 
-                value={formTitle} 
-                onChange={(e) => setFormTitle(e.target.value)} 
+              <textarea
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
                 disabled={!isAdmin}
-                className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] focus:ring-[#6366f1]/20 transition-all text-base px-5 shadow-sm font-semibold text-[#1e293b] placeholder:text-slate-300 disabled:opacity-70 disabled:bg-slate-50" 
-                placeholder="Ví dụ: Nâng cấp hạ tầng bảo mật..." 
+                className="w-full min-h-[100px] p-5 rounded-[1.5rem] bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all text-[15px] font-bold text-[#1e293b] placeholder:text-slate-300 shadow-sm outline-none leading-relaxed disabled:opacity-70 disabled:bg-slate-50"
+                placeholder="Nhập nội dung chi tiết tại đây..."
               />
             </div>
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
-                  <Clock className="h-3.5 w-3.5 text-[#6366f1]" /> Thời hạn kết thúc
+                <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
+                  <Calendar className="h-4 w-4 text-[#6366f1]" /> Thời hạn kết thúc
                 </Label>
                 <div className="relative">
-                  <Input 
-                    type="date" 
-                    value={formDeadline} 
-                    onChange={(e) => setFormDeadline(e.target.value)} 
+                  <Input
+                    type="date"
+                    value={formDeadline}
+                    onChange={(e) => setFormDeadline(e.target.value)}
                     disabled={!isAdmin}
-                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-medium text-[#1e293b] disabled:opacity-70 disabled:bg-slate-50" 
+                    className="h-14 rounded-[1.2rem] bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-bold text-[#1e293b] disabled:opacity-70 disabled:bg-slate-50"
                   />
                 </div>
               </div>
               {(dialogType?.includes('bt') || dialogType?.includes('st')) && (
                 <div className="space-y-3">
-                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
-                    <TrendingUp className="h-3.5 w-3.5 text-[#6366f1]" /> Trọng số (Weight)
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
+                    <Activity className="h-4 w-4 text-[#6366f1]" /> Trọng số (Weight)
                   </Label>
-                  <Input 
-                    type="number" 
-                    value={formWeight} 
-                    onChange={(e) => setFormWeight(Number(e.target.value))} 
+                  <Input
+                    type="number"
+                    value={formWeight}
+                    onChange={(e) => setFormWeight(Number(e.target.value))}
                     disabled={!isAdmin}
-                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-fira-code text-lg font-bold text-[#6366f1] disabled:opacity-70 disabled:bg-slate-50" 
-                    min={0.1} 
-                    step={0.1} 
+                    className="h-14 rounded-[1.2rem] bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-fira-code text-lg font-black text-[#6366f1] disabled:opacity-70 disabled:bg-slate-50"
+                    min={0.1}
+                    step={0.1}
                   />
                 </div>
               )}
@@ -422,28 +423,28 @@ export function OKRTree() {
             {(dialogType === 'add-st' || dialogType === 'edit-st') && (
               <div className="space-y-6 pt-2">
                 <div className="space-y-3">
-                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
-                    <Users className="h-3.5 w-3.5 text-[#6366f1]" /> Nhân sự thực hiện
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
+                    <Users className="h-4 w-4 text-[#6366f1]" /> Nhân sự thực hiện
                   </Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         disabled={!isAdmin}
-                        className="w-full justify-between text-left font-normal h-14 rounded-2xl bg-white border-[#e2e8f0] hover:bg-white hover:border-[#6366f1] transition-all px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50"
+                        className="w-full justify-between text-left font-normal h-14 rounded-[1.2rem] bg-white border-[#e2e8f0] hover:bg-white hover:border-[#6366f1] transition-all px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50"
                       >
-                        <div className="flex items-center gap-2 overflow-hidden">
-                          <Users className="h-4 w-4 text-[#6366f1]" />
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <Users className="h-5 w-5 text-[#6366f1]" />
                           {formAssignee.length > 0 ? (
-                            <div className="flex gap-1 overflow-hidden">
+                            <div className="flex gap-2 overflow-hidden">
                               {formAssignee.map(name => (
-                                <Badge key={name} variant="secondary" className="bg-[#6366f1]/10 text-[#6366f1] border-none whitespace-nowrap text-[10px]">
+                                <Badge key={name} variant="secondary" className="bg-[#6366f1]/10 text-[#6366f1] border-none whitespace-nowrap text-[10px] font-black px-2 py-1 rounded-lg">
                                   {name.split(' ').pop()}
                                 </Badge>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-[#94a3b8]">Chọn nhân sự...</span>
+                            <span className="text-[#94a3b8] font-medium">Chọn nhân sự phụ trách...</span>
                           )}
                         </div>
                         <ChevronRight className="h-4 w-4 text-[#94a3b8]" />
@@ -476,56 +477,47 @@ export function OKRTree() {
                                     <span className={cn("text-sm font-medium", isSelected ? "text-[#6366f1]" : "text-slate-700")}>
                                       {name}
                                     </span>
-                                  </div>
-                                  {isSelected && <Check className="h-4 w-4 text-[#6366f1]" />}
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <div className="space-y-4">
-                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
-                    <Activity className="h-3.5 w-3.5 text-[#6366f1]" /> Tiến độ & Trạng thái ({formProgress}%)
-                  </Label>
-                  <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm space-y-5">
-                    <div className="flex items-center gap-4">
-                      <Input 
-                        type="number" 
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center px-1">
+                    <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em]">
+                      <Settings2 className="h-4 w-4 text-[#6366f1]" /> Tiến độ thực tế
+                    </Label>
+                    <div className="bg-[#6366f1]/10 px-3 py-1 rounded-lg">
+                      <span className="text-[14px] font-black text-[#6366f1]">{formProgress}%</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6 bg-white p-5 rounded-[1.5rem] border border-[#e2e8f0] shadow-sm">
+                    <Input
+                      type="number"
+                      value={formProgress}
+                      onChange={(e) => setFormProgress(Number(e.target.value))}
+                      className="h-12 rounded-xl bg-slate-50 border-none w-24 text-center font-black text-[#1e293b] text-lg"
+                      min={0}
+                      max={100}
+                    />
+                    <div className="flex-1 px-2 relative py-4">
+                      <Progress value={formProgress} className="h-3 rounded-full bg-slate-100" indicatorColor="bg-gradient-to-r from-[#6366f1] to-[#a855f7]" />
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="100" 
                         value={formProgress} 
-                        onChange={(e) => setFormProgress(Number(e.target.value))} 
-                        className="h-12 rounded-xl bg-slate-50 border-none w-24 text-center font-black text-lg text-[#6366f1]" 
-                        min={0} 
-                        max={100} 
+                        onChange={(e) => setFormProgress(Number(e.target.value))}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       />
-                      <div className="flex-1 space-y-3">
-                        <Progress value={formProgress} className="h-3 bg-slate-100" indicatorColor={getProgressColor(formProgress)} />
-                        <Input 
-                          type="range" 
-                          min="0" 
-                          max="100" 
-                          value={formProgress} 
-                          onChange={(e) => setFormProgress(Number(e.target.value))}
-                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#6366f1]"
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
-                    <AlertCircle className="h-3.5 w-3.5 text-[#6366f1]" /> Ghi chú nội dung
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
+                    <AlertCircle className="h-4 w-4 text-[#6366f1]" /> Ghi chú thực hiện
                   </Label>
-                  <textarea 
-                    value={formNote} 
-                    onChange={(e) => setFormNote(e.target.value)} 
-                    className="w-full min-h-[120px] rounded-2xl bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all p-5 text-sm leading-relaxed placeholder:text-slate-300 shadow-sm outline-none resize-none" 
-                    placeholder="Mô tả công việc hoặc các vấn đề cần lưu ý..." 
+                  <textarea
+                    value={formNote}
+                    onChange={(e) => setFormNote(e.target.value)}
+                    placeholder="Nhập ghi chú hoặc kết quả thực hiện..."
+                    className="w-full min-h-[120px] p-5 rounded-[1.5rem] bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all text-[14px] font-medium text-[#1e293b] placeholder:text-slate-300 shadow-sm outline-none leading-relaxed"
                   />
                 </div>
               </div>
@@ -534,16 +526,16 @@ export function OKRTree() {
             <div className="pt-8 flex gap-4">
               <Button 
                 variant="outline" 
-                className="flex-1 h-14 rounded-2xl border-[#e2e8f0] text-[#64748b] font-bold hover:bg-slate-50 transition-all active:scale-95"
+                className="flex-1 h-15 rounded-[1.2rem] border-[#e2e8f0] text-[#64748b] font-bold hover:bg-slate-50 transition-all text-sm" 
                 onClick={() => setDialogType(null)}
               >
                 Hủy bỏ
               </Button>
-              <Button 
-                className="flex-[2] h-14 rounded-2xl bg-[#6366f1] hover:bg-[#4f46e5] text-white font-black shadow-lg shadow-[#6366f1]/25 transition-all active:scale-95 flex items-center justify-center gap-3"
+              <Button
                 onClick={handleAction}
+                className="flex-[2] bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:from-[#4f46e5] hover:to-[#4338ca] h-14 font-bold rounded-2xl text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
               >
-                <Check className="h-5 w-5" /> Lưu thay đổi
+                <Check className="mr-2 h-5 w-5" /> Xác nhận & Lưu
               </Button>
             </div>
           </div>
@@ -563,30 +555,30 @@ export function OKRTree() {
             {filteredOkrs.map((okr, index) => {
               const dlStatusOkr = getDeadlineStatus(okr.deadline, okr.progress, okr.completed_at);
               return (
-              <AccordionItem 
-                value={okr.id} 
-                key={okr.id} 
-                id={`okr-card-${okr.id}`}
-                className={`border-b border-white/10 last:border-0 ${draggedIndex === index ? 'opacity-30' : ''} ${highlightTaskId === okr.id ? 'bg-blue-50/50 ring-2 ring-blue-400 rounded-xl' : ''}`}
-                draggable={isAdmin}
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDragEnd={handleDragEnd}
-              >
-                <AccordionTrigger className={`px-8 py-5 hover:bg-white/30 transition-colors border-none no-underline ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-50/10' : ''}`}>
-                  <div className="grid grid-cols-[3fr_110px_140px_180px_170px] w-full items-center text-left">
-                    <div className="flex items-center gap-4 font-bold text-[#1e3a8a] text-[15px]">
-                      {isAdmin && (
-                        <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-blue-500 transition-colors mr-1">
-                          <GripVertical className="h-4 w-4" />
-                        </div>
-                      )}
-                      <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'} animate-pulse`} />
-                      <span className="truncate max-w-[500px]">OBJ: {okr.title}</span>
-                    </div>
-                    <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
-                    <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
-                    <div className="text-[#64748b] text-[11px] font-bold uppercase tracking-widest text-center">-</div>
+                <AccordionItem
+                  value={okr.id}
+                  key={okr.id}
+                  id={`okr-card-${okr.id}`}
+                  className={`border-b border-white/10 last:border-0 ${draggedIndex === index ? 'opacity-30' : ''} ${highlightTaskId === okr.id ? 'bg-blue-50/50 ring-2 ring-blue-400 rounded-xl' : ''}`}
+                  draggable={isAdmin}
+                  onDragStart={() => handleDragStart(index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                >
+                  <AccordionTrigger className={`px-8 py-5 hover:bg-white/30 transition-colors border-none no-underline ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-50/10' : ''}`}>
+                    <div className="grid grid-cols-[3fr_110px_140px_180px_170px] w-full items-center text-left">
+                      <div className="flex items-center gap-4 font-bold text-[#1e3a8a] text-[15px]">
+                        {isAdmin && (
+                          <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-blue-500 transition-colors mr-1">
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+                        )}
+                        <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'} animate-pulse`} />
+                        <span className="truncate max-w-[500px]">OBJ: {okr.title}</span>
+                      </div>
+                      <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
+                      <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
+                      <div className="text-[#64748b] text-[11px] font-bold uppercase tracking-widest text-center">-</div>
                       <div className="flex justify-end items-center pr-2 gap-2">
                         <Badge className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border-none ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-blue-100 text-[#2563eb]'}`}>
                           {dlStatusOkr.label}
@@ -599,96 +591,97 @@ export function OKRTree() {
                           </div>
                         )}
                       </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-0 pb-3 px-3">
-                  <div className="space-y-2">
-                    {okr.children.map((bigTask) => {
-                      const dlStatus = getDeadlineStatus(bigTask.deadline, bigTask.progress, bigTask.completed_at);
-                      return (
-                        <div key={bigTask.id} className="glass-card bg-white/20 border-white/40 rounded-2xl overflow-hidden">
-                          <div className="px-7 py-3.5 grid grid-cols-[3fr_110px_140px_160px_170px] items-center hover:bg-white/30 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="bg-[#1e3a8a] text-white text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider">PLAN</div>
-                              <span className="text-[14px] font-bold text-[#1e3a8a]">{bigTask.title}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-0 pb-3 px-3">
+                    <div className="space-y-2">
+                      {okr.children.map((bigTask) => {
+                        const dlStatus = getDeadlineStatus(bigTask.deadline, bigTask.progress, bigTask.completed_at);
+                        return (
+                          <div key={bigTask.id} className="glass-card bg-white/20 border-white/40 rounded-2xl overflow-hidden">
+                            <div className="px-7 py-3.5 grid grid-cols-[3fr_110px_140px_160px_170px] items-center hover:bg-white/30 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <div className="bg-[#1e3a8a] text-white text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider">PLAN</div>
+                                <span className="text-[14px] font-bold text-[#1e3a8a]">{bigTask.title}</span>
+                              </div>
+                              <div className="text-sm font-black text-[#1e3a8a] text-center">{bigTask.progress}%</div>
+                              <div className={`text-[11px] font-bold ${dlStatus.color} text-center`}>{bigTask.deadline}</div>
+                              <div className="text-[#64748b] text-center">-</div>
+                              <div className="flex justify-end items-center pr-2 gap-2">
+                                <Badge className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase border-none ${dlStatus.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-white/60 text-[#2563eb]'}`}>
+                                  {dlStatus.label}
+                                </Badge>
+                                {isAdmin && (
+                                  <div className="flex items-center">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[#2563eb] hover:bg-blue-50" onClick={() => openDialog('add-st', okr.id, bigTask.id)}><Plus className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b] hover:text-[#2563eb]" onClick={() => openDialog('edit-bt', okr.id, undefined, bigTask)}><Edit2 className="h-4 w-4" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-50" onClick={() => { if (confirm('Xóa PLAN này?')) deleteBigTask(okr.id, bigTask.id); }}><Trash2 className="h-4 w-4" /></Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="text-sm font-black text-[#1e3a8a] text-center">{bigTask.progress}%</div>
-                            <div className={`text-[11px] font-bold ${dlStatus.color} text-center`}>{bigTask.deadline}</div>
-                            <div className="text-[#64748b] text-center">-</div>
-                            <div className="flex justify-end items-center pr-2 gap-2">
-                               <Badge className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase border-none ${dlStatus.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-white/60 text-[#2563eb]'}`}>
-                                {dlStatus.label}
-                               </Badge>
-                               {isAdmin && (
-                                 <div className="flex items-center">
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-[#2563eb] hover:bg-blue-50" onClick={() => openDialog('add-st', okr.id, bigTask.id)}><Plus className="h-4 w-4" /></Button>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b] hover:text-[#2563eb]" onClick={() => openDialog('edit-bt', okr.id, undefined, bigTask)}><Edit2 className="h-4 w-4" /></Button>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-50" onClick={() => { if (confirm('Xóa PLAN này?')) deleteBigTask(okr.id, bigTask.id); }}><Trash2 className="h-4 w-4" /></Button>
-                                 </div>
-                               )}
-                            </div>
-                          </div>
-                          
-                          <div className="bg-white/5 px-3 py-2 space-y-1.5 border-t border-white/10">
-                            {bigTask.children.map((subTask) => {
-                              const isHighlighted = highlightTaskId === subTask.id;
-                              const stStatus = getDeadlineStatus(subTask.deadline, subTask.progress, subTask.completed_at);
-                              return (
-                                <div key={subTask.id} ref={isHighlighted ? highlightRef : undefined} className={`px-6 py-3 rounded-xl grid grid-cols-[3fr_110px_140px_160px_170px] items-center hover:bg-white/40 transition-all ${isHighlighted ? 'bg-amber-100 ring-2 ring-amber-400' : ''}`}>
-                                  <div className="pl-6 flex flex-col">
-                                    <div className="text-[14px] font-bold text-[#1e3a8a] flex items-center gap-3">
-                                      <ChevronRight className="h-4 w-4 text-[#64748b]" />
-                                      {subTask.title}
+
+                            <div className="bg-white/5 px-3 py-2 space-y-1.5 border-t border-white/10">
+                              {bigTask.children.map((subTask) => {
+                                const isHighlighted = highlightTaskId === subTask.id;
+                                const stStatus = getDeadlineStatus(subTask.deadline, subTask.progress, subTask.completed_at);
+                                return (
+                                  <div key={subTask.id} ref={isHighlighted ? highlightRef : undefined} className={`px-6 py-3 rounded-xl grid grid-cols-[3fr_110px_140px_160px_170px] items-center hover:bg-white/40 transition-all ${isHighlighted ? 'bg-amber-100 ring-2 ring-amber-400' : ''}`}>
+                                    <div className="pl-6 flex flex-col">
+                                      <div className="text-[14px] font-bold text-[#1e3a8a] flex items-center gap-3">
+                                        <ChevronRight className="h-4 w-4 text-[#64748b]" />
+                                        {subTask.title}
+                                      </div>
+                                      {subTask.note && <span className="text-[10px] text-[#64748b] ml-7 mt-1 italic line-clamp-1 leading-relaxed">{subTask.note}</span>}
                                     </div>
-                                    {subTask.note && <span className="text-[10px] text-[#64748b] ml-7 mt-1 italic line-clamp-1 leading-relaxed">{subTask.note}</span>}
-                                  </div>
-                                  <div className="flex items-center justify-center gap-3">
-                                    <Progress value={subTask.progress} indicatorColor={getProgressColor(subTask.progress)} className="h-2 w-14 bg-white/50" />
-                                    <span className="text-[11px] font-black text-[#1e3a8a]">{subTask.progress}%</span>
-                                  </div>
-                                  <div className={`text-[11px] font-bold ${stStatus.color} text-center`}>{subTask.deadline}</div>
-                                  <div className="flex items-center justify-center gap-3">
-                                     <div className="flex -space-x-1.5">
+                                    <div className="flex items-center justify-center gap-3">
+                                      <Progress value={subTask.progress} indicatorColor={getProgressColor(subTask.progress)} className="h-2 w-14 bg-white/50" />
+                                      <span className="text-[11px] font-black text-[#1e3a8a]">{subTask.progress}%</span>
+                                    </div>
+                                    <div className={`text-[11px] font-bold ${stStatus.color} text-center`}>{subTask.deadline}</div>
+                                    <div className="flex items-center justify-center gap-3">
+                                      <div className="flex -space-x-1.5">
                                         {subTask.assignee.split(',').map((name, i) => (
                                           <div key={i} className="h-7 w-7 rounded-full border-2 border-white text-[8px] flex items-center justify-center text-white font-black shadow-sm bg-blue-500">
                                             {name.trim().substring(0, 2).toUpperCase()}
                                           </div>
                                         ))}
-                                     </div>
-                                     <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
+                                      </div>
+                                      <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
+                                    </div>
+                                    <div className="flex justify-end pr-2 gap-1">
+                                      <Badge variant="ghost" className={`text-[9px] font-black uppercase ${stStatus.color} border-none`}>{stStatus.label}</Badge>
+                                      {(() => {
+                                        const isAssigned = user && subTask.assignee.includes(user.name);
+                                        return (isAdmin || isAssigned) && (
+                                          <div className="flex items-center">
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className={cn("h-7 w-7", isAssigned && !isAdmin ? "text-amber-600 bg-amber-50" : "text-[#64748b] hover:text-[#2563eb]")}
+                                              onClick={() => openDialog('edit-st', okr.id, bigTask.id, subTask)}
+                                            >
+                                              <Edit2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                            {isAdmin && (
+                                              <Button variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:bg-rose-50" onClick={() => { if (confirm('Xóa công việc này?')) deleteSubTask(okr.id, bigTask.id, subTask.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
+                                    </div>
                                   </div>
-                                  <div className="flex justify-end pr-2 gap-1">
-                                     <Badge variant="ghost" className={`text-[9px] font-black uppercase ${stStatus.color} border-none`}>{stStatus.label}</Badge>
-                                     {(() => {
-                                       const isAssigned = user && subTask.assignee.includes(user.name);
-                                       return (isAdmin || isAssigned) && (
-                                         <div className="flex items-center">
-                                           <Button 
-                                             variant="ghost" 
-                                             size="icon" 
-                                             className={cn("h-7 w-7", isAssigned && !isAdmin ? "text-amber-600 bg-amber-50" : "text-[#64748b] hover:text-[#2563eb]")} 
-                                             onClick={() => openDialog('edit-st', okr.id, bigTask.id, subTask)}
-                                           >
-                                             <Edit2 className="h-3.5 w-3.5" />
-                                           </Button>
-                                           {isAdmin && (
-                                             <Button variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:bg-rose-50" onClick={() => { if (confirm('Xóa công việc này?')) deleteSubTask(okr.id, bigTask.id, subTask.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
-                                           )}
-                                         </div>
-                                       );
-                                     })()}
-                                  </div>
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            )})}
+                        );
+                      })}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )
+            })}
           </Accordion>
         </CardContent>
       </Card>
