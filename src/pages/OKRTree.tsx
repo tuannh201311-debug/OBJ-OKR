@@ -345,63 +345,73 @@ export function OKRTree() {
 
       <Dialog open={!!dialogType} onOpenChange={(open) => !open && setDialogType(null)}>
         <DialogContent className="border-none rounded-[2.5rem] p-0 overflow-hidden max-w-xl bg-white/95 backdrop-blur-xl shadow-2xl">
-          <div className="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] p-8 text-white">
-            <DialogHeader>
+          <div className="bg-gradient-to-br from-[#4f46e5] to-[#7c3aed] p-10 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl animate-pulse" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#9333ea]/30 rounded-full -ml-10 -mb-10 blur-2xl" />
+            
+            <DialogHeader className="relative z-10">
               <div className="flex items-center justify-between">
-                <DialogTitle className="text-3xl font-bold flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
-                    {dialogType?.includes('add') ? <Plus className="h-6 w-6 text-white" /> : <Edit2 className="h-6 w-6 text-white" />}
+                <DialogTitle className="text-3xl font-bold flex items-center gap-5">
+                  <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-xl flex items-center justify-center shadow-xl border border-white/30">
+                    {dialogType?.includes('add') ? <Plus className="h-7 w-7 text-white" /> : <Edit2 className="h-7 w-7 text-white" />}
                   </div>
                   <div>
-                    <span className="block text-sm font-medium opacity-80 tracking-wider uppercase mb-1">
-                      {dialogType?.includes('okr') ? 'Objective' : dialogType?.includes('bt') ? 'Plan' : 'Task'} Management
+                    <span className="block text-[11px] font-black opacity-70 tracking-[0.2em] uppercase mb-1.5">
+                      {dialogType?.includes('okr') ? 'Strategic Objective' : dialogType?.includes('bt') ? 'Action Plan' : 'Detailed Task'}
                     </span>
-                    {dialogType === 'add-okr' && 'Khởi tạo OBJ'}
-                    {dialogType === 'edit-okr' && 'Chỉnh sửa OBJ'}
-                    {dialogType === 'add-bt' && 'Thêm PLAN mới'}
-                    {dialogType === 'edit-bt' && 'Chỉnh sửa PLAN'}
-                    {dialogType === 'add-st' && 'Thêm Công việc'}
-                    {dialogType === 'edit-st' && 'Cập nhật Công việc'}
+                    <span className="text-2xl tracking-tight">
+                      {dialogType === 'add-okr' && 'Khởi tạo OBJ'}
+                      {dialogType === 'edit-okr' && 'Chỉnh sửa OBJ'}
+                      {dialogType === 'add-bt' && 'Thêm PLAN mới'}
+                      {dialogType === 'edit-bt' && 'Chỉnh sửa PLAN'}
+                      {dialogType === 'add-st' && 'Thêm Công việc'}
+                      {dialogType === 'edit-st' && 'Cập nhật Công việc'}
+                    </span>
                   </div>
                 </DialogTitle>
               </div>
             </DialogHeader>
           </div>
 
-          <div className="p-8 space-y-6 bg-[#f8fafc]/50">
-            <div className="space-y-2">
-              <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Tiêu đề nội dung</Label>
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
+                <Layers className="h-3.5 w-3.5 text-[#6366f1]" /> Tiêu đề nội dung
+              </Label>
               <Input 
                 value={formTitle} 
                 onChange={(e) => setFormTitle(e.target.value)} 
                 disabled={!isAdmin}
-                className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] focus:ring-[#6366f1]/20 transition-all text-base px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50" 
-                placeholder="Ví dụ: Hoàn thiện UI Dashboard..." 
+                className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] focus:ring-[#6366f1]/20 transition-all text-base px-5 shadow-sm font-semibold text-[#1e293b] placeholder:text-slate-300 disabled:opacity-70 disabled:bg-slate-50" 
+                placeholder="Ví dụ: Nâng cấp hạ tầng bảo mật..." 
               />
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Thời hạn kết thúc</Label>
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
+                  <Clock className="h-3.5 w-3.5 text-[#6366f1]" /> Thời hạn kết thúc
+                </Label>
                 <div className="relative">
                   <Input 
                     type="date" 
                     value={formDeadline} 
                     onChange={(e) => setFormDeadline(e.target.value)} 
                     disabled={!isAdmin}
-                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50" 
+                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-medium text-[#1e293b] disabled:opacity-70 disabled:bg-slate-50" 
                   />
                 </div>
               </div>
               {(dialogType?.includes('bt') || dialogType?.includes('st')) && (
-                <div className="space-y-2">
-                  <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Trọng số (Weight)</Label>
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
+                    <TrendingUp className="h-3.5 w-3.5 text-[#6366f1]" /> Trọng số (Weight)
+                  </Label>
                   <Input 
                     type="number" 
                     value={formWeight} 
                     onChange={(e) => setFormWeight(Number(e.target.value))} 
                     disabled={!isAdmin}
-                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-mono text-lg disabled:opacity-70 disabled:bg-slate-50" 
+                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-fira-code text-lg font-bold text-[#6366f1] disabled:opacity-70 disabled:bg-slate-50" 
                     min={0.1} 
                     step={0.1} 
                   />
@@ -411,8 +421,10 @@ export function OKRTree() {
 
             {(dialogType === 'add-st' || dialogType === 'edit-st') && (
               <div className="space-y-6 pt-2">
-                <div className="space-y-2">
-                  <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Nhân sự thực hiện</Label>
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
+                    <Users className="h-3.5 w-3.5 text-[#6366f1]" /> Nhân sự thực hiện
+                  </Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button 
@@ -476,51 +488,62 @@ export function OKRTree() {
                   </Popover>
                 </div>
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center px-1">
-                    <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em]">Tiến độ thực tế</Label>
-                    <span className="text-[14px] font-black text-[#6366f1]">{formProgress}%</span>
-                  </div>
-                  <div className="flex items-center gap-5 bg-white p-4 rounded-2xl border border-[#e2e8f0] shadow-sm">
-                    <Input 
-                      type="number" 
-                      value={formProgress} 
-                      onChange={(e) => setFormProgress(Number(e.target.value))} 
-                      className="h-10 rounded-lg bg-slate-50 border-none w-20 text-center font-bold text-[#1e293b]" 
-                      min={0} 
-                      max={100} 
-                    />
-                    <div className="flex-1 px-2">
-                      <Progress value={formProgress} className="h-3 rounded-full bg-slate-100" indicatorColor="bg-gradient-to-r from-[#6366f1] to-[#a855f7]" />
+                <div className="space-y-4">
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
+                    <Activity className="h-3.5 w-3.5 text-[#6366f1]" /> Tiến độ & Trạng thái ({formProgress}%)
+                  </Label>
+                  <div className="bg-white p-6 rounded-2xl border border-[#e2e8f0] shadow-sm space-y-5">
+                    <div className="flex items-center gap-4">
+                      <Input 
+                        type="number" 
+                        value={formProgress} 
+                        onChange={(e) => setFormProgress(Number(e.target.value))} 
+                        className="h-12 rounded-xl bg-slate-50 border-none w-24 text-center font-black text-lg text-[#6366f1]" 
+                        min={0} 
+                        max={100} 
+                      />
+                      <div className="flex-1 space-y-3">
+                        <Progress value={formProgress} className="h-3 bg-slate-100" indicatorColor={getProgressColor(formProgress)} />
+                        <Input 
+                          type="range" 
+                          min="0" 
+                          max="100" 
+                          value={formProgress} 
+                          onChange={(e) => setFormProgress(Number(e.target.value))}
+                          className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#6366f1]"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Ghi chú chi tiết</Label>
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">
+                    <AlertCircle className="h-3.5 w-3.5 text-[#6366f1]" /> Ghi chú nội dung
+                  </Label>
                   <textarea 
                     value={formNote} 
                     onChange={(e) => setFormNote(e.target.value)} 
-                    className="w-full min-h-[100px] rounded-2xl bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]/20 transition-all p-4 text-sm resize-none shadow-sm" 
+                    className="w-full min-h-[120px] rounded-2xl bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all p-5 text-sm leading-relaxed placeholder:text-slate-300 shadow-sm outline-none resize-none" 
                     placeholder="Mô tả công việc hoặc các vấn đề cần lưu ý..." 
                   />
                 </div>
               </div>
             )}
 
-            <div className="pt-4 flex gap-3">
-               <Button 
+            <div className="pt-8 flex gap-4">
+              <Button 
                 variant="outline" 
+                className="flex-1 h-14 rounded-2xl border-[#e2e8f0] text-[#64748b] font-bold hover:bg-slate-50 transition-all active:scale-95"
                 onClick={() => setDialogType(null)}
-                className="flex-1 h-14 rounded-2xl font-bold text-slate-500 border-[#e2e8f0] hover:bg-slate-50 transition-all"
               >
                 Hủy bỏ
               </Button>
               <Button 
-                onClick={handleAction} 
-                className="flex-[2] bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:from-[#4f46e5] hover:to-[#4338ca] h-14 font-bold rounded-2xl text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
+                className="flex-[2] h-14 rounded-2xl bg-[#6366f1] hover:bg-[#4f46e5] text-white font-black shadow-lg shadow-[#6366f1]/25 transition-all active:scale-95 flex items-center justify-center gap-3"
+                onClick={handleAction}
               >
-                <Check className="mr-2 h-5 w-5" /> Xác nhận & Lưu
+                <Check className="h-5 w-5" /> Lưu thay đổi
               </Button>
             </div>
           </div>
