@@ -34,6 +34,7 @@ export function Dashboard() {
       }
     }
     return {
+      id: okr.id,
       name: okr.title,
       progress: okr.progress,
       isOverdue
@@ -157,11 +158,31 @@ export function Dashboard() {
           </div>
           <div className="flex-1 min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={okrTLData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} height={40} />
+              <BarChart data={okrTLData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600 }} 
+                  height={80} 
+                  interval={0}
+                  angle={-25}
+                  textAnchor="end"
+                />
                 <YAxis axisLine={false} tickLine={false} domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
                 <RechartsTooltip cursor={{ fill: 'rgba(37, 99, 235, 0.03)' }} contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="progress" radius={[12, 12, 12, 12]} barSize={50}>
+                <Bar 
+                  dataKey="progress" 
+                  radius={[12, 12, 12, 12]} 
+                  barSize={50}
+                  onClick={(data) => {
+                    if (data && data.id) {
+                      setHighlightTaskId(data.id);
+                      navigate('/okr-tree');
+                    }
+                  }}
+                  className="cursor-pointer"
+                >
                   {okrTLData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.isOverdue ? '#EF4444' : '#2563eb'} />
                   ))}
