@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from typing import List, Optional
+from pydantic import BaseModel
 
 from database import users_collection, okrs_collection, big_tasks_collection, sub_tasks_collection, weekly_reports_collection
 from models import (
