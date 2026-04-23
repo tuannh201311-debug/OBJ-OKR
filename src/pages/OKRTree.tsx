@@ -592,7 +592,7 @@ export function OKRTree() {
                       <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
                       <div className="text-[#64748b] text-[11px] font-bold uppercase tracking-widest text-center">-</div>
                       <div className="flex justify-end items-center pr-2 gap-2">
-                        <Badge variant="outline" className={`px-4 py-1 rounded-lg text-[10px] font-black uppercase ${dlStatusOkr.badgeClass}`}>
+                        <Badge variant="outline" className={`whitespace-nowrap text-center px-4 py-1 rounded-lg text-[10px] font-black uppercase ${dlStatusOkr.badgeClass}`}>
                           {dlStatusOkr.label}
                         </Badge>
                         {isAdmin && (
@@ -620,7 +620,7 @@ export function OKRTree() {
                               <div className={`text-[11px] font-bold ${dlStatus.color} text-center`}>{bigTask.deadline}</div>
                               <div className="text-[#64748b] text-center">-</div>
                               <div className="flex justify-end items-center pr-2 gap-2">
-                                <Badge variant="outline" className={`px-3 py-0.5 rounded-lg text-[9px] font-black uppercase ${dlStatus.badgeClass}`}>
+                                <Badge variant="outline" className={`whitespace-nowrap text-center px-3 py-0.5 rounded-lg text-[9px] font-black uppercase ${dlStatus.badgeClass}`}>
                                   {dlStatus.label}
                                 </Badge>
                                 {isAdmin && (
@@ -662,7 +662,7 @@ export function OKRTree() {
                                       <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
                                     </div>
                                     <div className="flex justify-end pr-2 gap-1">
-                                      <Badge variant="outline" className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${stStatus.badgeClass}`}>{stStatus.label}</Badge>
+                                      <Badge variant="outline" className={`whitespace-nowrap text-center text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${stStatus.badgeClass}`}>{stStatus.label}</Badge>
                                       {(() => {
                                         const isAssigned = user && subTask.assignee.includes(user.name);
                                         return (isAdmin || isAssigned) && (
