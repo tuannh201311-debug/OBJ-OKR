@@ -128,20 +128,26 @@ export function OKRTree() {
     }).filter(okr => okr.children.length > 0);
   }, [okrs, filterAssignee, filterStatus, searchQuery]);
 
-  const expandedOkrIds = highlightTaskId
-    ? okrs.filter(okr => okr.children.some(bt => bt.children.some(st => st.id === highlightTaskId))).map(o => o.id)
-    : [];
+  const expandedOkrIds = useMemo(() => {
+    if (!highlightTaskId) return [];
+    const direct = okrs.filter(okr => okr.id === highlightTaskId).map(o => o.id);
+    const fromSubtask = okrs.filter(okr => okr.children.some(bt => bt.children.some(st => st.id === highlightTaskId))).map(o => o.id);
+    return [...new Set([...direct, ...fromSubtask])];
+  }, [highlightTaskId, okrs]);
 
   const [accordionValue, setAccordionValue] = useState<string[]>(expandedOkrIds.length > 0 ? expandedOkrIds : (okrs.length > 0 ? [okrs[0].id] : []));
 
   useEffect(() => {
     if (highlightTaskId && expandedOkrIds.length > 0) {
       setAccordionValue(expandedOkrIds);
-      setTimeout(() => highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+      setTimeout(() => {
+        const element = document.getElementById(`okr-card-${highlightTaskId}`) || highlightRef.current;
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
       const timer = setTimeout(() => setHighlightTaskId(null), 3000);
       return () => clearTimeout(timer);
     }
-  }, [highlightTaskId]);
+  }, [highlightTaskId, expandedOkrIds]);
 
   useEffect(() => {
     if (filterAssignee !== 'all' || filterStatus || searchQuery) {
@@ -537,7 +543,8 @@ export function OKRTree() {
               <AccordionItem 
                 value={okr.id} 
                 key={okr.id} 
-                className={`border-b border-white/10 last:border-0 ${draggedIndex === index ? 'opacity-30' : ''}`}
+                id={`okr-card-${okr.id}`}
+                className={`border-b border-white/10 last:border-0 ${draggedIndex === index ? 'opacity-30' : ''} ${highlightTaskId === okr.id ? 'bg-blue-50/50 ring-2 ring-blue-400 rounded-xl' : ''}`}
                 draggable={isAdmin}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
