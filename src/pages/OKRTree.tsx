@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check, GripVertical } from 'lucide-react';
+import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check, GripVertical, Calendar } from 'lucide-react';
 import { useAppContext, OKR, BigTask, SubTask } from '@/context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
