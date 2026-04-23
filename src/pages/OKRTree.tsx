@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check, GripVertical, Calendar } from 'lucide-react';
+import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check, GripVertical, Calendar, Link, Upload, X, Paperclip } from 'lucide-react';
 import { useAppContext, OKR, BigTask, SubTask } from '@/context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -93,6 +93,7 @@ export function OKRTree() {
   const [formAssignee, setFormAssignee] = useState<string[]>([]);
   const [formProgress, setFormProgress] = useState(0);
   const [formNote, setFormNote] = useState('');
+  const [formAttachments, setFormAttachments] = useState<string[]>([]);
 
   const [dialogType, setDialogType] = useState<'add-okr' | 'edit-okr' | 'add-bt' | 'edit-bt' | 'add-st' | 'edit-st' | null>(null);
 
@@ -187,6 +188,7 @@ export function OKRTree() {
       setFormWeight(item.weight || 1);
       setFormProgress(item.progress || 0);
       setFormNote(item.note || '');
+      setFormAttachments((item as SubTask).attachments || []);
       setFormAssignee(item.assignee ? item.assignee.split(',').map((s: string) => s.trim()) : []);
 
       if (type === 'edit-okr') setOkrToEdit(item);
@@ -198,6 +200,7 @@ export function OKRTree() {
       setFormWeight(1);
       setFormProgress(0);
       setFormNote('');
+      setFormAttachments([]);
       setFormAssignee([]);
     }
   };
@@ -210,14 +213,42 @@ export function OKRTree() {
       if (dialogType === 'edit-okr') updateOkr(okrToEdit.id, formTitle, formDeadline);
       if (dialogType === 'add-bt') addBigTask(targetOkrId!, { title: formTitle, weight: formWeight, deadline: formDeadline });
       if (dialogType === 'edit-bt') updateBigTask(targetOkrId!, btToEdit.id, formTitle, formWeight, formDeadline);
-      if (dialogType === 'add-st') addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote });
-      if (dialogType === 'edit-st') updateSubTask(targetOkrId!, targetBtId!, stToEdit.id, formProgress, formNote, formAssignee.join(', '), formDeadline, formTitle, formWeight);
+      if (dialogType === 'add-st') addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote, attachments: formAttachments });
+      if (dialogType === 'edit-st') updateSubTask(targetOkrId!, targetBtId!, stToEdit.id, formProgress, formNote, formAssignee.join(', '), formDeadline, formTitle, formWeight, formAttachments);
 
       setDialogType(null);
       toast.success('Thao tác thành công');
     } catch (e) {
       toast.error('Lỗi khi lưu dữ liệu');
     }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFormAttachments(prev => [...prev, data.url]);
+        toast.success('Tải lên thành công');
+      } else {
+        toast.error('Tải lên thất bại');
+      }
+    } catch(e) {
+      toast.error('Lỗi khi tải file');
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setFormAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDragStart = (index: number) => {
@@ -532,6 +563,34 @@ export function OKRTree() {
                     className="w-full min-h-[120px] p-5 rounded-[1.5rem] bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-4 focus:ring-[#6366f1]/10 transition-all text-[14px] font-medium text-[#1e293b] placeholder:text-slate-300 shadow-sm outline-none leading-relaxed"
                   />
                 </div>
+
+                <div className="space-y-3">
+                  <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
+                    <Paperclip className="h-4 w-4 text-[#6366f1]" /> Đính kèm tài liệu
+                  </Label>
+                  <div className="flex flex-col gap-3">
+                    {formAttachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formAttachments.map((url, i) => (
+                          <div key={i} className="flex items-center gap-2 bg-[#f8fafc] border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 shadow-sm">
+                            <Link className="h-3 w-3 text-slate-400" />
+                            <a href={url} target="_blank" rel="noreferrer" className="hover:text-[#6366f1] truncate max-w-[200px] text-[13px] font-bold transition-colors">
+                              {url.split('/').pop()?.split('_')[0] + '.' + url.split('.').pop()}
+                            </a>
+                            <button onClick={() => removeAttachment(i)} className="ml-2 hover:bg-rose-100 bg-white border border-slate-200 rounded-full p-1 transition-colors group"><X className="h-3 w-3 text-slate-400 group-hover:text-rose-500" /></button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="relative">
+                      <input type="file" onChange={handleUpload} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                      <div className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-[1.2rem] p-6 bg-slate-50 hover:bg-[#6366f1]/5 hover:border-[#6366f1] transition-all text-slate-500 text-[13px] font-bold shadow-sm">
+                        <Upload className="h-5 w-5 text-slate-400" />
+                        <span>Kéo thả hoặc click để tải lên file đính kèm</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -645,6 +704,16 @@ export function OKRTree() {
                                         {subTask.title}
                                       </div>
                                       {subTask.note && <span className="text-[10px] text-[#64748b] ml-7 mt-1 italic line-clamp-1 leading-relaxed">{subTask.note}</span>}
+                                      {subTask.attachments && subTask.attachments.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 ml-7 mt-2">
+                                          {subTask.attachments.map((url, i) => (
+                                            <a key={i} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 bg-white/50 border border-slate-200/50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors rounded-md px-2 py-1 text-[9px] font-bold text-slate-500 shadow-sm" onClick={e => e.stopPropagation()}>
+                                              <Paperclip className="h-3 w-3" />
+                                              <span className="truncate max-w-[100px]">{url.split('/').pop()?.split('_')[0] + '.' + url.split('.').pop()}</span>
+                                            </a>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
                                     <div className="flex items-center justify-center gap-3">
                                       <Progress value={subTask.progress} indicatorColor={getProgressColor(subTask.progress)} className="h-2 w-14 bg-white/50" />

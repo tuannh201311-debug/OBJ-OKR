@@ -1,5 +1,8 @@
 import re
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi.staticfiles import StaticFiles
+import os
+import shutil
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from typing import List, Optional
@@ -26,6 +29,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+@app.post("/api/upload")
+def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
+    base, ext = os.path.splitext(file.filename)
+    unique_filename = f"{base}_{generate_uuid()[:8]}{ext}"
+    file_location = f"uploads/{unique_filename}"
+    with open(file_location, "wb+") as file_object:
+        shutil.copyfileobj(file.file, file_object)
+    return {"url": f"/uploads/{unique_filename}", "name": file.filename}
 
 
 @app.get("/")

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { fetchWithAuth } from '@/lib/api';
 
-export type SubTask = { id: string; title: string; assignee: string; progress: number; weight: number; deadline: string; status: string; note?: string; big_task_id?: string; completed_at?: string; };
+export type SubTask = { id: string; title: string; assignee: string; progress: number; weight: number; deadline: string; status: string; note?: string; attachments?: string[]; big_task_id?: string; completed_at?: string; };
 export type BigTask = { id: string; title: string; progress: number; weight: number; deadline: string; children: SubTask[]; okr_id?: string; completed_at?: string; };
 export type OKR = { id: string; title: string; type: string; progress: number; deadline: string; children: BigTask[]; user_id?: string; completed_at?: string; };
 
@@ -32,7 +32,7 @@ interface AppContextType {
   updateBigTask: (okrId: string, btId: string, title: string, weight: number, deadline: string) => void;
   deleteBigTask: (okrId: string, btId: string) => void;
   addSubTask: (okrId: string, btId: string, task: Omit<SubTask, 'id'>) => void;
-  updateSubTask: (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number) => void;
+  updateSubTask: (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number, attachments?: string[]) => void;
   deleteSubTask: (okrId: string, btId: string, stId: string) => void;
   importOkrs: (newOkrs: OKR[]) => void;
   highlightTaskId: string | null;
@@ -177,6 +177,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 completed_at: st.completed_at,
                 status: st.status,
                 note: st.note || undefined,
+                attachments: st.attachments || [],
               })),
           })),
       }));
@@ -231,7 +232,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           const payloadST = {
             id: st.id, big_task_id: bt.id, title: st.title, assignee: st.assignee,
             progress: st.progress, weight: st.weight, deadline: st.deadline,
-            status: st.status, note: st.note || '', completed_at: st.completed_at
+            status: st.status, note: st.note || '', completed_at: st.completed_at, attachments: st.attachments || []
           };
           await fetchWithAuth(`/sub-tasks/${st.id}`, { method: 'PUT', body: JSON.stringify(payloadST) })
              .then(res => res.ok ? res : fetchWithAuth(`/sub-tasks`, { method: 'POST', body: JSON.stringify(payloadST) }));
@@ -300,7 +301,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const okr = okrs.find(o => o.id === okrId);
     if (okr) saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: [...bt.children, { ...task, id: crypto.randomUUID() }] }) });
   };
-  const updateSubTask = (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number) => {
+  const updateSubTask = (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number, attachments?: string[]) => {
     const okr = okrs.find(o => o.id === okrId);
     if (okr) saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: bt.children.map(st => {
       if (st.id === stId) {
@@ -310,7 +311,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         } else if (progress < 100) {
           newCompletedAt = undefined;
         }
-        return { ...st, progress, note, assignee, deadline, title, weight, completed_at: newCompletedAt };
+        return { ...st, progress, note, assignee, deadline, title, weight, completed_at: newCompletedAt, attachments: attachments !== undefined ? attachments : st.attachments };
       }
       return st;
     }) }) });

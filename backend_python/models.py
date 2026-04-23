@@ -95,6 +95,7 @@ class SubTaskBase(BaseModel):
     weight: float = Field(0.0, ge=0)
     deadline: Optional[str] = "2026-12-31"
     note: Optional[str] = ""
+    attachments: List[str] = []
 
     @field_validator('deadline')
     @classmethod
