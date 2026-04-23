@@ -5,12 +5,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter } from 'lucide-react';
-import { useAppContext } from '@/context/AppContext';
+import { Edit2, Plus, AlertCircle, Search, FileUp, Layers, ChevronRight, Users, Filter, Trash2, Settings2, Activity, Check } from 'lucide-react';
+import { useAppContext, OKR, BigTask, SubTask } from '@/context/AppContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
 const getProgressColor = (progress: number) => {
   if (progress >= 80) return 'bg-[#10b981]';
@@ -72,6 +77,23 @@ export function OKRTree() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const { addBigTask, updateBigTask, deleteBigTask, addSubTask, updateSubTask, deleteSubTask, systemUsers } = useAppContext();
+
+  // Dialog & Form States
+  const [okrToEdit, setOkrToEdit] = useState<OKR | null>(null);
+  const [btToEdit, setBtToEdit] = useState<BigTask | null>(null);
+  const [stToEdit, setStToEdit] = useState<SubTask | null>(null);
+  const [targetBtId, setTargetBtId] = useState<string | null>(null);
+  const [targetOkrId, setTargetOkrId] = useState<string | null>(null);
+
+  const [formTitle, setFormTitle] = useState('');
+  const [formDeadline, setFormDeadline] = useState('');
+  const [formWeight, setFormWeight] = useState(1);
+  const [formAssignee, setFormAssignee] = useState<string[]>([]);
+  const [formProgress, setFormProgress] = useState(0);
+  const [formNote, setFormNote] = useState('');
+
+  const [dialogType, setDialogType] = useState<'add-okr' | 'edit-okr' | 'add-bt' | 'edit-bt' | 'add-st' | 'edit-st' | null>(null);
 
   const filteredOkrs = useMemo(() => {
     let result = okrs;
@@ -146,6 +168,50 @@ export function OKRTree() {
     });
     return Object.entries(stats).sort((a, b) => b[1].total - a[1].total);
   }, [okrs]);
+
+  const openDialog = (type: typeof dialogType, okrId?: string, btId?: string, item?: OKR | BigTask | SubTask) => {
+    setDialogType(type);
+    setTargetOkrId(okrId || null);
+    setTargetBtId(btId || null);
+    
+    if (item) {
+      setFormTitle(item.title || '');
+      setFormDeadline(item.deadline || '2026-12-31');
+      setFormWeight(item.weight || 1);
+      setFormProgress(item.progress || 0);
+      setFormNote(item.note || '');
+      setFormAssignee(item.assignee ? item.assignee.split(',').map((s: string) => s.trim()) : []);
+      
+      if (type === 'edit-okr') setOkrToEdit(item);
+      if (type === 'edit-bt') setBtToEdit(item);
+      if (type === 'edit-st') setStToEdit(item);
+    } else {
+      setFormTitle('');
+      setFormDeadline('2026-12-31');
+      setFormWeight(1);
+      setFormProgress(0);
+      setFormNote('');
+      setFormAssignee([]);
+    }
+  };
+
+  const handleAction = () => {
+    if (!formTitle) return toast.error('Vui lòng nhập tiêu đề');
+    
+    try {
+      if (dialogType === 'add-okr') addOkr(formTitle, formDeadline);
+      if (dialogType === 'edit-okr') updateOkr(okrToEdit.id, formTitle, formDeadline);
+      if (dialogType === 'add-bt') addBigTask(targetOkrId!, { title: formTitle, weight: formWeight, deadline: formDeadline });
+      if (dialogType === 'edit-bt') updateBigTask(targetOkrId!, btToEdit.id, formTitle, formWeight, formDeadline);
+      if (dialogType === 'add-st') addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote });
+      if (dialogType === 'edit-st') updateSubTask(targetOkrId!, targetBtId!, stToEdit.id, formProgress, formNote, formAssignee.join(', '), formDeadline, formTitle, formWeight);
+      
+      setDialogType(null);
+      toast.success('Thao tác thành công');
+    } catch (e) {
+      toast.error('Lỗi khi lưu dữ liệu');
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col gap-3 font-inter overflow-hidden px-2">
@@ -239,24 +305,199 @@ export function OKRTree() {
             </Button>
           )}
           {isAdmin && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-5 rounded-xl font-bold text-[12px] shadow-md">
-                  <Plus className="mr-1.5 h-4 w-4" /> Thêm OBJ
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="glass-card border-none rounded-[1.5rem] p-6">
-                <DialogHeader><DialogTitle className="text-2xl font-bold text-[#1e3a8a]">Khởi tạo mục tiêu</DialogTitle></DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-1"><Label className="text-[#64748b] text-[11px] uppercase font-black">Tiêu đề</Label><Input value={newOkrTitle} onChange={(e) => setNewOkrTitle(e.target.value)} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1"><Label className="text-[#64748b] text-[11px] uppercase font-black">Thời hạn</Label><Input type="date" value={newOkrDeadline} onChange={(e) => setNewOkrDeadline(e.target.value)} className="h-11 rounded-xl" /></div>
-                  <Button onClick={() => { addOkr(newOkrTitle, newOkrDeadline || '2026-12-31'); setNewOkrTitle(''); setNewOkrDeadline(''); }} className="w-full bg-[#2563eb] h-12 font-bold mt-4 rounded-xl text-lg">Xác nhận tạo OBJ</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-5 rounded-xl font-bold text-[12px] shadow-md"
+              onClick={() => openDialog('add-okr')}
+            >
+              <Plus className="mr-1.5 h-4 w-4" /> Thêm OBJ
+            </Button>
           )}
         </div>
       </div>
+
+      <Dialog open={!!dialogType} onOpenChange={(open) => !open && setDialogType(null)}>
+        <DialogContent className="border-none rounded-[2.5rem] p-0 overflow-hidden max-w-xl bg-white/95 backdrop-blur-xl shadow-2xl">
+          <div className="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] p-8 text-white">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-3xl font-bold flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
+                    {dialogType?.includes('add') ? <Plus className="h-6 w-6 text-white" /> : <Edit2 className="h-6 w-6 text-white" />}
+                  </div>
+                  <div>
+                    <span className="block text-sm font-medium opacity-80 tracking-wider uppercase mb-1">
+                      {dialogType?.includes('okr') ? 'Objective' : dialogType?.includes('bt') ? 'Plan' : 'Task'} Management
+                    </span>
+                    {dialogType === 'add-okr' && 'Khởi tạo OBJ'}
+                    {dialogType === 'edit-okr' && 'Chỉnh sửa OBJ'}
+                    {dialogType === 'add-bt' && 'Thêm PLAN mới'}
+                    {dialogType === 'edit-bt' && 'Chỉnh sửa PLAN'}
+                    {dialogType === 'add-st' && 'Thêm Công việc'}
+                    {dialogType === 'edit-st' && 'Cập nhật Công việc'}
+                  </div>
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="p-8 space-y-6 bg-[#f8fafc]/50">
+            <div className="space-y-2">
+              <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Tiêu đề nội dung</Label>
+              <Input 
+                value={formTitle} 
+                onChange={(e) => setFormTitle(e.target.value)} 
+                disabled={!isAdmin}
+                className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] focus:ring-[#6366f1]/20 transition-all text-base px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50" 
+                placeholder="Ví dụ: Hoàn thiện UI Dashboard..." 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Thời hạn kết thúc</Label>
+                <div className="relative">
+                  <Input 
+                    type="date" 
+                    value={formDeadline} 
+                    onChange={(e) => setFormDeadline(e.target.value)} 
+                    disabled={!isAdmin}
+                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50" 
+                  />
+                </div>
+              </div>
+              {(dialogType?.includes('bt') || dialogType?.includes('st')) && (
+                <div className="space-y-2">
+                  <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Trọng số (Weight)</Label>
+                  <Input 
+                    type="number" 
+                    value={formWeight} 
+                    onChange={(e) => setFormWeight(Number(e.target.value))} 
+                    disabled={!isAdmin}
+                    className="h-14 rounded-2xl bg-white border-[#e2e8f0] focus:border-[#6366f1] transition-all px-5 shadow-sm font-mono text-lg disabled:opacity-70 disabled:bg-slate-50" 
+                    min={0.1} 
+                    step={0.1} 
+                  />
+                </div>
+              )}
+            </div>
+
+            {(dialogType === 'add-st' || dialogType === 'edit-st') && (
+              <div className="space-y-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Nhân sự thực hiện</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        disabled={!isAdmin}
+                        className="w-full justify-between text-left font-normal h-14 rounded-2xl bg-white border-[#e2e8f0] hover:bg-white hover:border-[#6366f1] transition-all px-5 shadow-sm disabled:opacity-70 disabled:bg-slate-50"
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <Users className="h-4 w-4 text-[#6366f1]" />
+                          {formAssignee.length > 0 ? (
+                            <div className="flex gap-1 overflow-hidden">
+                              {formAssignee.map(name => (
+                                <Badge key={name} variant="secondary" className="bg-[#6366f1]/10 text-[#6366f1] border-none whitespace-nowrap text-[10px]">
+                                  {name.split(' ').pop()}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[#94a3b8]">Chọn nhân sự...</span>
+                          )}
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-[#94a3b8]" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[320px] p-0 rounded-[1.5rem] shadow-2xl border-none overflow-hidden" align="start">
+                      <Command className="border-none">
+                        <CommandInput placeholder="Tìm nhân sự..." className="h-12 border-none focus:ring-0" />
+                        <CommandList className="max-h-[250px]">
+                          <CommandEmpty>Không tìm thấy.</CommandEmpty>
+                          <CommandGroup className="p-2">
+                            {systemUsers.map((u) => {
+                              const name = u.display_name || u.email;
+                              const isSelected = formAssignee.includes(name);
+                              return (
+                                <CommandItem
+                                  key={u.id}
+                                  onSelect={() => {
+                                    setFormAssignee(prev => isSelected ? prev.filter(n => n !== name) : [...prev, name]);
+                                  }}
+                                  className="flex items-center justify-between rounded-xl p-3 cursor-pointer hover:bg-[#6366f1]/5"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                      "h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold",
+                                      isSelected ? "bg-[#6366f1] text-white" : "bg-slate-100 text-slate-500"
+                                    )}>
+                                      {name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span className={cn("text-sm font-medium", isSelected ? "text-[#6366f1]" : "text-slate-700")}>
+                                      {name}
+                                    </span>
+                                  </div>
+                                  {isSelected && <Check className="h-4 w-4 text-[#6366f1]" />}
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center px-1">
+                    <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em]">Tiến độ thực tế</Label>
+                    <span className="text-[14px] font-black text-[#6366f1]">{formProgress}%</span>
+                  </div>
+                  <div className="flex items-center gap-5 bg-white p-4 rounded-2xl border border-[#e2e8f0] shadow-sm">
+                    <Input 
+                      type="number" 
+                      value={formProgress} 
+                      onChange={(e) => setFormProgress(Number(e.target.value))} 
+                      className="h-10 rounded-lg bg-slate-50 border-none w-20 text-center font-bold text-[#1e293b]" 
+                      min={0} 
+                      max={100} 
+                    />
+                    <div className="flex-1 px-2">
+                      <Progress value={formProgress} className="h-3 rounded-full bg-slate-100" indicatorColor="bg-gradient-to-r from-[#6366f1] to-[#a855f7]" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[#475569] text-[11px] uppercase font-black tracking-[0.1em] ml-1">Ghi chú chi tiết</Label>
+                  <textarea 
+                    value={formNote} 
+                    onChange={(e) => setFormNote(e.target.value)} 
+                    className="w-full min-h-[100px] rounded-2xl bg-white border border-[#e2e8f0] focus:border-[#6366f1] focus:ring-1 focus:ring-[#6366f1]/20 transition-all p-4 text-sm resize-none shadow-sm" 
+                    placeholder="Mô tả công việc hoặc các vấn đề cần lưu ý..." 
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="pt-4 flex gap-3">
+               <Button 
+                variant="outline" 
+                onClick={() => setDialogType(null)}
+                className="flex-1 h-14 rounded-2xl font-bold text-slate-500 border-[#e2e8f0] hover:bg-slate-50 transition-all"
+              >
+                Hủy bỏ
+              </Button>
+              <Button 
+                onClick={handleAction} 
+                className="flex-[2] bg-gradient-to-r from-[#6366f1] to-[#4f46e5] hover:from-[#4f46e5] hover:to-[#4338ca] h-14 font-bold rounded-2xl text-lg shadow-xl shadow-indigo-100 transition-all active:scale-95"
+              >
+                <Check className="mr-2 h-5 w-5" /> Xác nhận & Lưu
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Card className="glass-card border-none rounded-[2rem] flex-1 flex flex-col shadow-none overflow-hidden min-h-0">
         <div className="bg-[#2563eb]/5 px-8 py-3.5 grid grid-cols-[3fr_110px_140px_180px_170px] text-[11px] font-black text-[#64748b] uppercase tracking-[0.15em] border-b border-white/20">
@@ -281,14 +522,18 @@ export function OKRTree() {
                     <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
                     <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
                     <div className="text-[#64748b] text-[11px] font-bold uppercase tracking-widest text-center">-</div>
-                    <div className="flex justify-end items-center pr-2 gap-6">
-                      <Badge className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border-none ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-blue-100 text-[#2563eb]'}`}>
-                        {dlStatusOkr.label}
-                      </Badge>
-                      {isAdmin && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b] hover:text-[#2563eb]" onClick={(e) => { e.stopPropagation(); setEditOkrTitle(okr.title); setEditOkrDeadline(okr.deadline || '2026-12-31'); }}><Edit2 className="h-4 w-4" /></Button>
-                      )}
-                    </div>
+                      <div className="flex justify-end items-center pr-2 gap-2">
+                        <Badge className={`px-4 py-1 rounded-full text-[10px] font-black uppercase border-none ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-blue-100 text-[#2563eb]'}`}>
+                          {dlStatusOkr.label}
+                        </Badge>
+                        {isAdmin && (
+                          <div className="flex items-center">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#2563eb] hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); openDialog('add-bt', okr.id); }}><Plus className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b] hover:text-[#2563eb]" onClick={(e) => { e.stopPropagation(); openDialog('edit-okr', undefined, undefined, okr); }}><Edit2 className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-50" onClick={(e) => { e.stopPropagation(); if (confirm('Xóa OBJ này?')) deleteOkr(okr.id); }}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        )}
+                      </div>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-0 pb-3 px-3">
@@ -305,10 +550,17 @@ export function OKRTree() {
                             <div className="text-sm font-black text-[#1e3a8a] text-center">{bigTask.progress}%</div>
                             <div className={`text-[11px] font-bold ${dlStatus.color} text-center`}>{bigTask.deadline}</div>
                             <div className="text-[#64748b] text-center">-</div>
-                            <div className="flex justify-end items-center pr-2 gap-4">
+                            <div className="flex justify-end items-center pr-2 gap-2">
                                <Badge className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase border-none ${dlStatus.variant === 'destructive' ? 'bg-rose-500 text-white' : 'bg-white/60 text-[#2563eb]'}`}>
                                 {dlStatus.label}
                                </Badge>
+                               {isAdmin && (
+                                 <div className="flex items-center">
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-[#2563eb] hover:bg-blue-50" onClick={() => openDialog('add-st', okr.id, bigTask.id)}><Plus className="h-4 w-4" /></Button>
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-[#64748b] hover:text-[#2563eb]" onClick={() => openDialog('edit-bt', okr.id, undefined, bigTask)}><Edit2 className="h-4 w-4" /></Button>
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 hover:bg-rose-50" onClick={() => { if (confirm('Xóa PLAN này?')) deleteBigTask(okr.id, bigTask.id); }}><Trash2 className="h-4 w-4" /></Button>
+                                 </div>
+                               )}
                             </div>
                           </div>
                           
@@ -340,8 +592,26 @@ export function OKRTree() {
                                      </div>
                                      <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
                                   </div>
-                                  <div className="flex justify-end pr-2">
+                                  <div className="flex justify-end pr-2 gap-1">
                                      <Badge variant="ghost" className={`text-[9px] font-black uppercase ${stStatus.color} border-none`}>{stStatus.label}</Badge>
+                                     {(() => {
+                                       const isAssigned = user && subTask.assignee.includes(user.name);
+                                       return (isAdmin || isAssigned) && (
+                                         <div className="flex items-center">
+                                           <Button 
+                                             variant="ghost" 
+                                             size="icon" 
+                                             className={cn("h-7 w-7", isAssigned && !isAdmin ? "text-amber-600 bg-amber-50" : "text-[#64748b] hover:text-[#2563eb]")} 
+                                             onClick={() => openDialog('edit-st', okr.id, bigTask.id, subTask)}
+                                           >
+                                             <Edit2 className="h-3.5 w-3.5" />
+                                           </Button>
+                                           {isAdmin && (
+                                             <Button variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:bg-rose-50" onClick={() => { if (confirm('Xóa công việc này?')) deleteSubTask(okr.id, bigTask.id, subTask.id); }}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                           )}
+                                         </div>
+                                       );
+                                     })()}
                                   </div>
                                 </div>
                               );

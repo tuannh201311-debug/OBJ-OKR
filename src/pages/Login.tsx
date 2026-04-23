@@ -38,8 +38,9 @@ export function Login() {
       localStorage.setItem("token", data.access_token);
       await refreshAuth();
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Đăng nhập thất bại.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -59,9 +60,9 @@ export function Login() {
               </div>
             </div>
             <div className="space-y-1">
-              <CardTitle className="text-3xl font-fira-code font-bold text-[#1e3a8a]">Welcome Back</CardTitle>
+              <CardTitle className="text-3xl font-fira-code font-bold text-[#1e3a8a]">Chào mừng trở lại</CardTitle>
               <CardDescription className="text-[#64748b] font-medium flex items-center justify-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" /> 9Pay Strategic Management
+                <Sparkles className="h-3.5 w-3.5" /> Quản lý OKR Chiến lược 9Pay
               </CardDescription>
             </div>
           </CardHeader>
@@ -75,7 +76,7 @@ export function Login() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-[10px] font-black text-[#64748b] uppercase tracking-widest ml-1">Identity (Email)</Label>
+                <Label htmlFor="email" className="text-[10px] font-black text-[#64748b] uppercase tracking-widest ml-1">Tài khoản (Email)</Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
                   <Input
@@ -91,7 +92,7 @@ export function Login() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" title="Password" className="text-[10px] font-black text-[#64748b] uppercase tracking-widest ml-1">Access Key</Label>
+                <Label htmlFor="password" title="Mật khẩu" className="text-[10px] font-black text-[#64748b] uppercase tracking-widest ml-1">Mật mã truy cập</Label>
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
                   <Input
@@ -110,15 +111,15 @@ export function Login() {
                 {loading ? (
                   <div className="flex items-center gap-3">
                     <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Authenticating...
+                    Đang xác thực...
                   </div>
-                ) : 'Sign In'}
+                ) : 'Đăng nhập'}
               </Button>
             </form>
 
             <div className="mt-8 text-center">
               <p className="text-[10px] text-[#64748b] font-bold uppercase tracking-widest">
-                Protected by enterprise-grade security
+                Bảo mật theo tiêu chuẩn doanh nghiệp
               </p>
             </div>
           </CardContent>

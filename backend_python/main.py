@@ -134,7 +134,7 @@ def delete_user(target_id: str, user_id: str = Depends(get_admin_user)):
 # ================= OKRS API =================
 @app.get("/api/okrs", response_model=List[OKRResponse])
 def get_okrs():
-    return list(okrs_collection.find({}))
+    return [{**o, "_id": str(o["_id"])} for o in okrs_collection.find({})]
 
 @app.post("/api/okrs", response_model=OKRResponse)
 def create_okr(okr: OKRCreate, user_id: str = Depends(get_admin_user)):
@@ -145,6 +145,7 @@ def create_okr(okr: OKRCreate, user_id: str = Depends(get_admin_user)):
     if okr_doc.get("progress") == 100:
         okr_doc["completed_at"] = datetime.utcnow().isoformat()
     okrs_collection.insert_one(okr_doc)
+    okr_doc["_id"] = str(okr_doc["_id"])
     return okr_doc
 
 @app.put("/api/okrs/{okr_id}", response_model=OKRResponse)
@@ -167,6 +168,8 @@ def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_admin_use
         
     okrs_collection.update_one({"id": okr_id}, {"$set": okr_data})
     existing.update(okr_data)
+    if "_id" in existing:
+        existing["_id"] = str(existing["_id"])
     return existing
 
 @app.delete("/api/okrs/{okr_id}")
@@ -181,7 +184,7 @@ def delete_okr(okr_id: str, user_id: str = Depends(get_admin_user)):
 # ================= BIG TASKS API =================
 @app.get("/api/big-tasks", response_model=List[BigTaskResponse])
 def get_big_tasks():
-    return list(big_tasks_collection.find({}))
+    return [{**bt, "_id": str(bt["_id"])} for bt in big_tasks_collection.find({})]
 
 @app.post("/api/big-tasks", response_model=BigTaskResponse)
 def create_big_task(big_task: BigTaskCreate, user_id: str = Depends(get_admin_user)):
@@ -191,6 +194,7 @@ def create_big_task(big_task: BigTaskCreate, user_id: str = Depends(get_admin_us
     if bt_doc.get("progress") == 100:
         bt_doc["completed_at"] = datetime.utcnow().isoformat()
     big_tasks_collection.insert_one(bt_doc)
+    bt_doc["_id"] = str(bt_doc["_id"])
     return bt_doc
 
 @app.put("/api/big-tasks/{big_task_id}", response_model=BigTaskResponse)
@@ -212,6 +216,8 @@ def update_big_task(big_task_id: str, big_task: BigTaskCreate, user_id: str = De
 
     big_tasks_collection.update_one({"id": big_task_id}, {"$set": bt_data})
     existing.update(bt_data)
+    if "_id" in existing:
+        existing["_id"] = str(existing["_id"])
     return existing
 
 @app.delete("/api/big-tasks/{big_task_id}")
@@ -223,7 +229,7 @@ def delete_big_task(big_task_id: str, user_id: str = Depends(get_admin_user)):
 # ================= SUB TASKS API =================
 @app.get("/api/sub-tasks", response_model=List[SubTaskResponse])
 def get_sub_tasks():
-    return list(sub_tasks_collection.find({}))
+    return [{**st, "_id": str(st["_id"])} for st in sub_tasks_collection.find({})]
 
 @app.post("/api/sub-tasks", response_model=SubTaskResponse)
 def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_user)):
@@ -233,6 +239,7 @@ def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_us
     if st_doc.get("progress") == 100:
         st_doc["completed_at"] = datetime.utcnow().isoformat()
     sub_tasks_collection.insert_one(st_doc)
+    st_doc["_id"] = str(st_doc["_id"])
     return st_doc
 
 @app.put("/api/sub-tasks/{sub_task_id}", response_model=SubTaskResponse)
@@ -254,6 +261,8 @@ def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = De
 
     sub_tasks_collection.update_one({"id": sub_task_id}, {"$set": st_data})
     existing.update(st_data)
+    if "_id" in existing:
+        existing["_id"] = str(existing["_id"])
     return existing
 
 @app.delete("/api/sub-tasks/{sub_task_id}")
@@ -307,6 +316,7 @@ def get_my_report(week: int, year: int, user_id: str = Depends(get_current_user)
     report = weekly_reports_collection.find_one({"user_id": user_id, "week_number": week, "year": year})
     if not report:
         return None
+    report["_id"] = str(report["_id"])
     return report
 
 @app.post("/api/reports", response_model=WeeklyReportResponse)
@@ -330,12 +340,15 @@ def submit_report(report: WeeklyReportCreate, user_id: str = Depends(get_current
     else:
         report_data["id"] = generate_uuid()
         weekly_reports_collection.insert_one(report_data)
+        report_data["_id"] = str(report_data["_id"])
         
     return report_data
 
 @app.get("/api/reports/team", response_model=List[WeeklyReportResponse])
 def get_team_reports(week: int, year: int, user_id: str = Depends(get_admin_user)):
     reports = list(weekly_reports_collection.find({"week_number": week, "year": year}))
+    for r in reports:
+        r["_id"] = str(r["_id"])
     return reports
 
 if __name__ == "__main__":

@@ -8,8 +8,7 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 def validate_date_format(v):
-    if v and not re.match(r'^\d{4}-\d{2}-\d{2}$', v):
-        raise ValueError('Deadline must be in YYYY-MM-DD format')
+    # We still prefer YYYY-MM-DD but won't block the API if it's different
     return v
 
 class UserCreate(BaseModel):

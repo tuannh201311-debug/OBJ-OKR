@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAppContext } from '@/context/AppContext';
+import { useAppContext, SubTask } from '@/context/AppContext';
 import { fetchWithAuth } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,6 +62,7 @@ export function WeeklyReport() {
 
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [viewingReport, setViewingReport] = useState<Report | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -100,8 +101,13 @@ export function WeeklyReport() {
   };
 
   useEffect(() => {
-    loadData();
-  }, [selectedWeek, selectedYear]);
+    if (user) {
+      loadData();
+    } else {
+      setMyReport(null);
+      setTeamReports([]);
+    }
+  }, [selectedWeek, selectedYear, user]);
 
   const handleSubmit = async () => {
     setSaving(true);
@@ -138,7 +144,7 @@ export function WeeklyReport() {
     setNewAdHoc('');
   };
 
-  const toggleTaskSelection = (st: any, okrTitle: string) => {
+  const toggleTaskSelection = (st: SubTask, okrTitle: string) => {
     const isAlreadySelected = doneTasks.find(d => d.id === st.id);
     if (isAlreadySelected) {
       setDoneTasks(p => p.filter(d => d.id !== st.id));
@@ -153,7 +159,7 @@ export function WeeklyReport() {
 **Người thực hiện:** ${report.user_name || user?.name}
 **Ngày nộp:** ${report.submitted_at ? new Date(report.submitted_at).toLocaleDateString('vi-VN') : 'Chưa nộp'}
 
-## 1. Công việc đã hoàn thành (OKR)
+## 1. Công việc thực hiện trong tuần
 ${report.done_tasks?.length ? report.done_tasks.map(t => `- [x] ${t.title} (${t.okr_title})`).join('\n') : '- Không có'}
 
 ## 2. Công việc phát sinh ngoài OKR
@@ -172,6 +178,32 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
     navigator.clipboard.writeText(md);
     toast.success('Đã sao chép nội dung Markdown');
   };
+
+  if (!user) {
+    return (
+      <div className="h-[calc(100vh-80px)] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-white/80 backdrop-blur-xl">
+          <div className="bg-gradient-to-br from-[#6366f1] to-[#4f46e5] p-10 text-center text-white">
+            <div className="h-20 w-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner mx-auto mb-6">
+              <Clock className="h-10 w-10 text-white animate-pulse" />
+            </div>
+            <h2 className="text-2xl font-bold mb-3">Yêu cầu đăng nhập</h2>
+            <p className="text-indigo-100 opacity-90 text-sm leading-relaxed">
+              Bạn cần đăng nhập vào tài khoản của mình để có thể gửi báo cáo tuần và xem lịch sử báo cáo.
+            </p>
+          </div>
+          <CardContent className="p-8">
+            <Button 
+              className="w-full bg-[#6366f1] hover:bg-[#4f46e5] h-14 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-100 transition-all active:scale-95"
+              onClick={() => window.location.href = '/login'}
+            >
+              Đi tới trang Đăng nhập
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[calc(100vh-80px)] overflow-hidden flex flex-col font-inter p-4 md:px-8 md:py-4 gap-4">
@@ -226,7 +258,7 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-[#1e3a8a] flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    Công việc OKR đã hoàn thành
+                    Công việc thực hiện trong tuần
                   </h3>
                   
                   <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
@@ -402,14 +434,21 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
               </CardHeader>
               <CardContent className="p-0 space-y-2.5 overflow-y-auto scrollbar-hide flex-1 pr-1 mt-4">
                 {teamReports.map(rep => (
-                  <div key={rep.id} className="flex items-center justify-between p-3.5 bg-white/40 border border-white/60 rounded-2xl hover:bg-white transition-all shadow-sm group">
+                  <div 
+                    key={rep.id} 
+                    className="flex items-center justify-between p-3.5 bg-white/40 border border-white/60 rounded-2xl hover:bg-white transition-all shadow-sm group cursor-pointer"
+                    onClick={() => setViewingReport(rep)}
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="h-9 w-9 rounded-full bg-[#2563eb] flex items-center justify-center text-white text-[11px] font-black border-2 border-white shadow-md flex-shrink-0 group-hover:scale-110 transition-transform">
                         {rep.user_name?.substring(0, 2).toUpperCase()}
                       </div>
-                      <span className="text-[12px] font-bold text-[#1e3a8a] truncate">{rep.user_name}</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[12px] font-bold text-[#1e3a8a] truncate">{rep.user_name}</span>
+                        <span className="text-[9px] text-[#64748b] font-medium">{new Date(rep.submitted_at).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})}</span>
+                      </div>
                     </div>
-                    <Badge className="bg-emerald-500 text-white text-[9px] h-5 rounded-full px-2 border-none shadow-sm font-black">ĐÃ NỘP</Badge>
+                    <Badge className="bg-emerald-500 text-white text-[9px] h-5 rounded-full px-2 border-none shadow-sm font-black">CHI TIẾT</Badge>
                   </div>
                 ))}
                 {teamReports.length === 0 && (
@@ -423,6 +462,87 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
           </aside>
         )}
       </div>
+
+      <Dialog open={!!viewingReport} onOpenChange={(open) => !open && setViewingReport(null)}>
+        <DialogContent className="max-w-3xl bg-[#f8fafc] rounded-[2.5rem] border-none p-0 overflow-hidden shadow-2xl">
+          {viewingReport && (
+            <div className="flex flex-col max-h-[85vh]">
+              <div className="bg-gradient-to-br from-[#1e3a8a] to-[#2563eb] p-8 text-white">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-5">
+                    <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl font-black shadow-inner">
+                      {viewingReport.user_name?.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">{viewingReport.user_name}</h2>
+                      <p className="opacity-80 text-sm font-medium">Báo cáo Tuần {viewingReport.week_number} • {viewingReport.year}</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" onClick={() => exportMarkdown(viewingReport)} className="text-white hover:bg-white/10 rounded-xl h-10 font-bold border border-white/20">
+                    <Download className="h-4 w-4 mr-2" /> Markdown
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-8 overflow-y-auto space-y-8 flex-1">
+                <section className="space-y-4">
+                  <h3 className="text-xs font-black text-[#1e3a8a] flex items-center gap-2 uppercase tracking-[0.15em] opacity-70">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Công việc thực hiện trong tuần
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {viewingReport.done_tasks.map((t, idx) => (
+                      <div key={idx} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                        <p className="text-[14px] font-bold text-[#1e293b]">{t.title}</p>
+                        <p className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1.5">{t.okr_title}</p>
+                      </div>
+                    ))}
+                    {!viewingReport.done_tasks.length && <p className="text-sm italic text-slate-400">Không có</p>}
+                  </div>
+                </section>
+
+                <section className="space-y-4">
+                  <h3 className="text-xs font-black text-[#1e3a8a] flex items-center gap-2 uppercase tracking-[0.15em] opacity-70">
+                    <Plus className="h-4 w-4 text-blue-500" /> Công việc ngoài OKR
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {viewingReport.ad_hoc_tasks.map((t, idx) => (
+                      <div key={idx} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+                        <p className="text-[14px] font-bold text-[#1e293b]">{t}</p>
+                      </div>
+                    ))}
+                    {!viewingReport.ad_hoc_tasks.length && <p className="text-sm italic text-slate-400">Không có</p>}
+                  </div>
+                </section>
+
+                <div className="grid grid-cols-2 gap-8">
+                  <section className="space-y-3">
+                    <h3 className="text-xs font-black text-rose-600 flex items-center gap-2 uppercase tracking-[0.15em] opacity-70">
+                      <AlertCircle className="h-4 w-4" /> Khó khăn
+                    </h3>
+                    <div className="p-5 bg-rose-50/30 border border-rose-100 rounded-2xl text-sm text-slate-700 leading-relaxed italic">
+                      {viewingReport.challenges || "Không có khó khăn nào được ghi nhận."}
+                    </div>
+                  </section>
+                  <section className="space-y-3">
+                    <h3 className="text-xs font-black text-blue-600 flex items-center gap-2 uppercase tracking-[0.15em] opacity-70">
+                      <Circle className="h-4 w-4" /> Kế hoạch tuần tới
+                    </h3>
+                    <div className="p-5 bg-blue-50/30 border border-blue-100 rounded-2xl text-sm text-slate-700 leading-relaxed italic">
+                      {viewingReport.next_week_plan || "Chưa có kế hoạch tuần tới."}
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <Button onClick={() => setViewingReport(null)} className="bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white px-10 h-12 rounded-xl font-bold">
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
