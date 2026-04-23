@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Network, Settings, Shield, LogOut, FileText, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Network, Settings, Shield, LogOut, FileText, Sparkles, KanbanSquare } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 
@@ -11,6 +11,7 @@ export function Layout() {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard, adminOnly: false },
     { name: 'Quản lý OKR', href: '/okr-tree', icon: Network, adminOnly: false },
+    { name: 'Kanban Board', href: '/kanban', icon: KanbanSquare, adminOnly: false },
     { name: 'Báo cáo tuần', href: '/weekly-report', icon: FileText, adminOnly: false },
     { name: 'Cài đặt hệ thống', href: '/settings', icon: Settings, adminOnly: true },
   ];
@@ -25,7 +26,7 @@ export function Layout() {
   return (
     <div className="min-h-screen liquid-gradient flex font-inter text-[#1e293b] overflow-hidden">
       {/* Premium Glass Sidebar */}
-      <aside className="w-[280px] glass-card m-4 rounded-[2rem] p-6 flex flex-col shrink-0 z-50">
+      <aside className="w-[280px] glass-card m-4 rounded-[2rem] p-6 flex flex-col shrink-0 z-50 print:hidden">
         <div className="mb-10 px-2 flex items-center gap-3">
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#2563eb] to-[#60a5fa] flex items-center justify-center shadow-lg shadow-blue-200">
             <Shield className="h-7 w-7 text-white" />

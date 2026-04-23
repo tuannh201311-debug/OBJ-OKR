@@ -206,7 +206,7 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] overflow-hidden flex flex-col font-inter p-4 md:px-8 md:py-4 gap-4">
+    <div className="h-[calc(100vh-80px)] print:h-auto overflow-hidden print:overflow-visible flex flex-col font-inter p-4 md:px-8 md:py-4 gap-4">
       
       {/* Floating Header - Compact Style */}
       <header className="glass-card p-4 rounded-[1.5rem] flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm flex-shrink-0">
@@ -228,17 +228,23 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
             </select>
           </div>
           {myReport && (
-            <Button size="sm" onClick={() => exportMarkdown(myReport)} className="bg-white text-[#2563eb] hover:bg-[#F0F7FF] border border-[#DBEAFE] rounded-xl h-10 font-bold shadow-sm px-4">
-              <Download className="h-4 w-4 mr-2" />
-              Markdown
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => exportMarkdown(myReport)} className="bg-white text-[#2563eb] hover:bg-[#F0F7FF] border border-[#DBEAFE] rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
+                <Download className="h-4 w-4 mr-2" />
+                Markdown
+              </Button>
+              <Button size="sm" onClick={() => window.print()} className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
+                <FileText className="h-4 w-4 mr-2" />
+                Xuất PDF
+              </Button>
+            </div>
           )}
         </div>
       </header>
 
-      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-4' : ''} gap-4 flex-1 overflow-hidden`}>
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-4' : ''} print:block gap-4 flex-1 overflow-hidden print:overflow-visible`}>
         {/* Main Content Area - Scrollable */}
-        <main className={`${isAdmin ? 'lg:col-span-3' : 'w-full'} flex flex-col gap-4 overflow-hidden`}>
+        <main className={`${isAdmin ? 'lg:col-span-3' : 'w-full'} flex flex-col gap-4 overflow-hidden print:overflow-visible`}>
           <Card className="glass-card border-none rounded-[2rem] shadow-none flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
             <CardHeader className="p-6 pb-2 border-b border-white/20 flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -251,7 +257,7 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
               </div>
             </CardHeader>
 
-            <CardContent className="p-6 overflow-y-auto scrollbar-hide space-y-8 flex-1">
+            <CardContent className="p-6 overflow-y-auto print:overflow-visible scrollbar-hide space-y-8 flex-1">
 
               {/* OKR Tasks Section */}
               <section className="space-y-4">
@@ -422,7 +428,7 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
 
         {/* Admin Sidebar - Teams */}
         {isAdmin && (
-          <aside className="flex flex-col gap-4 overflow-hidden">
+          <aside className="flex flex-col gap-4 overflow-hidden print:hidden">
             <Card className="glass-card border-none rounded-[2.5rem] p-6 shadow-sm flex-1 flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-700">
               <CardHeader className="p-0 pb-4 flex-shrink-0">
                 <CardTitle className="text-sm font-black text-[#1e3a8a] flex items-center gap-2 uppercase tracking-widest">
