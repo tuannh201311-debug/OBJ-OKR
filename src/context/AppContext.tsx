@@ -215,9 +215,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
          progress: Number(recalculated.progress) || 0, objective: recalculated.title, deadline: recalculated.deadline,
          completed_at: recalculated.completed_at
       };
-      // Upsert
-      await fetchWithAuth(`/okrs/${recalculated.id}`, { method: 'PUT', body: JSON.stringify(payloadOKR) })
-         .then(res => res.ok ? res : fetchWithAuth(`/okrs`, { method: 'POST', body: JSON.stringify(payloadOKR) }));
+      
+      let res = await fetchWithAuth(`/okrs/${recalculated.id}`, { method: 'PUT', body: JSON.stringify(payloadOKR) });
+      if (!res.ok) {
+        res = await fetchWithAuth(`/okrs`, { method: 'POST', body: JSON.stringify(payloadOKR) });
+      }
+      if (!res.ok) throw new Error(`Failed to sync OKR ${recalculated.id}: ${res.status}`);
 
       for (const bt of recalculated.children) {
         const payloadBT = {
@@ -225,8 +228,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           progress: Number(bt.progress) || 0, weight: Number(bt.weight) || 0, deadline: bt.deadline,
           completed_at: bt.completed_at
         };
-        await fetchWithAuth(`/big-tasks/${bt.id}`, { method: 'PUT', body: JSON.stringify(payloadBT) })
-           .then(res => res.ok ? res : fetchWithAuth(`/big-tasks`, { method: 'POST', body: JSON.stringify(payloadBT) }));
+        
+        let resBt = await fetchWithAuth(`/big-tasks/${bt.id}`, { method: 'PUT', body: JSON.stringify(payloadBT) });
+        if (!resBt.ok) {
+          resBt = await fetchWithAuth(`/big-tasks`, { method: 'POST', body: JSON.stringify(payloadBT) });
+        }
+        if (!resBt.ok) throw new Error(`Failed to sync BigTask ${bt.id}: ${resBt.status}`);
 
         for (const st of bt.children) {
           const payloadST = {
@@ -234,8 +241,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             progress: Number(st.progress) || 0, weight: Number(st.weight) || 0, deadline: st.deadline,
             status: st.status, note: st.note || '', completed_at: st.completed_at, attachments: st.attachments || []
           };
-          await fetchWithAuth(`/sub-tasks/${st.id}`, { method: 'PUT', body: JSON.stringify(payloadST) })
-             .then(res => res.ok ? res : fetchWithAuth(`/sub-tasks`, { method: 'POST', body: JSON.stringify(payloadST) }));
+          
+          let resSt = await fetchWithAuth(`/sub-tasks/${st.id}`, { method: 'PUT', body: JSON.stringify(payloadST) });
+          if (!resSt.ok) {
+            resSt = await fetchWithAuth(`/sub-tasks`, { method: 'POST', body: JSON.stringify(payloadST) });
+          }
+          if (!resSt.ok) throw new Error(`Failed to sync SubTask ${st.id}: ${resSt.status}`);
         }
       }
     }
