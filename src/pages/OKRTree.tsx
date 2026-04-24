@@ -272,67 +272,6 @@ export function OKRTree() {
     await reorderOkrs(okrs);
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const rows = results.data as any[];
-          // Simple flat CSV to OKR tree logic (assuming specific format)
-          // For now, let's just support a basic structure or alert the user
-          // Realistically, we should support the same format we export
-          toast.info('Đang xử lý dữ liệu...');
-          
-          // Implementation of CSV parsing to OKR structure
-          // This is complex, let's provide a basic version or JSON import as fallback
-          const newOkrs: OKR[] = [];
-          // ... (parsing logic)
-          
-          toast.success('Nhập dữ liệu thành công (Tính năng đang hoàn thiện)');
-        } catch (error) {
-          toast.error('Lỗi định dạng file CSV');
-        }
-      }
-    });
-  };
-
-  const exportJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(okrs, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `okr_backup_${new Date().toISOString().split('T')[0]}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    toast.success('Đã xuất file backup JSON');
-  };
-
-  const handleJSONImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        if (Array.isArray(json)) {
-          await importOkrs(json);
-          toast.success('Khôi phục dữ liệu thành công');
-        } else {
-          throw new Error('Định dạng không hợp lệ');
-        }
-      } catch (err) {
-        toast.error('File không hợp lệ');
-      }
-    };
-    reader.readAsText(file);
-  };
-
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col gap-3 font-inter overflow-hidden px-2">
 
@@ -419,31 +358,6 @@ export function OKRTree() {
           <h1 className="text-base font-bold text-[#1e3a8a] tracking-tight">Nội dung chi tiết OKR</h1>
         </div>
         <div className="flex gap-2">
-          {isAdmin && (
-            <>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".json"
-                onChange={handleJSONImport}
-              />
-              <Button 
-                variant="outline" 
-                className="h-9 border-white/80 text-[#2563eb] font-bold rounded-xl hover:bg-white text-[12px] px-4 shadow-sm"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <FileUp className="h-4 w-4 mr-2" /> Nhập JSON (Khôi phục)
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-9 border-white/80 text-emerald-600 font-bold rounded-xl hover:bg-white text-[12px] px-4 shadow-sm"
-                onClick={exportJSON}
-              >
-                <FileUp className="h-4 w-4 mr-2" /> Xuất JSON (Sao lưu)
-              </Button>
-            </>
-          )}
           {isAdmin && (
             <Button
               className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-9 px-5 rounded-xl font-bold text-[12px] shadow-md"
