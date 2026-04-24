@@ -220,7 +220,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (!res.ok) {
         res = await fetchWithAuth(`/okrs`, { method: 'POST', body: JSON.stringify(payloadOKR) });
       }
-      if (!res.ok) throw new Error(`Failed to sync OKR ${recalculated.id}: ${res.status}`);
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("OKR Sync Error:", errText);
+        throw new Error(`Failed to sync OKR ${recalculated.id}: ${res.status} - ${errText}`);
+      }
 
       for (const bt of recalculated.children) {
         const payloadBT = {
@@ -233,7 +237,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (!resBt.ok) {
           resBt = await fetchWithAuth(`/big-tasks`, { method: 'POST', body: JSON.stringify(payloadBT) });
         }
-        if (!resBt.ok) throw new Error(`Failed to sync BigTask ${bt.id}: ${resBt.status}`);
+        if (!resBt.ok) {
+          const errText = await resBt.text();
+          console.error("BigTask Sync Error:", errText);
+          throw new Error(`Failed to sync BigTask ${bt.id}: ${resBt.status} - ${errText}`);
+        }
 
         for (const st of bt.children) {
           const payloadST = {
@@ -246,7 +254,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           if (!resSt.ok) {
             resSt = await fetchWithAuth(`/sub-tasks`, { method: 'POST', body: JSON.stringify(payloadST) });
           }
-          if (!resSt.ok) throw new Error(`Failed to sync SubTask ${st.id}: ${resSt.status}`);
+          if (!resSt.ok) {
+            const errText = await resSt.text();
+            console.error("SubTask Sync Error:", errText);
+            throw new Error(`Failed to sync SubTask ${st.id}: ${resSt.status} - ${errText}`);
+          }
         }
       }
     }
