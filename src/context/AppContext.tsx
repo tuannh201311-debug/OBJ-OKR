@@ -46,6 +46,17 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | null>(null);
 
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback for HTTP (non-secure) environments
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const recalculateOkr = (okr: OKR): OKR => {
   const newChildren = okr.children.map(bt => {
     if (bt.children.length === 0) return bt;
@@ -291,7 +302,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addOkr = async (title: string, deadline: string) => {
-    await saveOkr({ id: crypto.randomUUID(), title, type: 'OKR', progress: 0, deadline, children: [] });
+    await saveOkr({ id: generateId(), title, type: 'OKR', progress: 0, deadline, children: [] });
   };
   const updateOkr = async (okrId: string, title: string, deadline: string) => {
     const okr = okrs.find(o => o.id === okrId);
@@ -305,7 +316,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   const addBigTask = async (okrId: string, task: Omit<BigTask, 'id' | 'children' | 'progress'>) => {
     const okr = okrs.find(o => o.id === okrId);
-    if (okr) await saveOkr({ ...okr, children: [...okr.children, { ...task, id: crypto.randomUUID(), progress: 0, children: [] }] });
+    if (okr) await saveOkr({ ...okr, children: [...okr.children, { ...task, id: generateId(), progress: 0, children: [] }] });
   };
   const updateBigTask = async (okrId: string, btId: string, title: string, weight: number, deadline: string) => {
     const okr = okrs.find(o => o.id === okrId);
@@ -321,7 +332,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   const addSubTask = async (okrId: string, btId: string, task: Omit<SubTask, 'id'>) => {
     const okr = okrs.find(o => o.id === okrId);
-    if (okr) await saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: [...bt.children, { ...task, id: crypto.randomUUID() }] }) });
+    if (okr) await saveOkr({ ...okr, children: okr.children.map(bt => bt.id !== btId ? bt : { ...bt, children: [...bt.children, { ...task, id: generateId() }] }) });
   };
   const updateSubTask = async (okrId: string, btId: string, stId: string, progress: number, note: string, assignee: string, deadline: string, title: string, weight: number, attachments?: string[]) => {
     const okr = okrs.find(o => o.id === okrId);
