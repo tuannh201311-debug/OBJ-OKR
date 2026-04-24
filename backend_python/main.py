@@ -158,7 +158,8 @@ def get_okrs():
 @app.post("/api/okrs", response_model=OKRResponse)
 def create_okr(okr: OKRCreate, user_id: str = Depends(get_admin_user)):
     okr_doc = okr.dict()
-    okr_doc["id"] = generate_uuid()
+    if not okr_doc.get("id"):
+        okr_doc["id"] = generate_uuid()
     okr_doc["user_id"] = user_id
     okr_doc["created_at"] = datetime.utcnow().isoformat()
     if okr_doc.get("progress") == 100:
@@ -219,7 +220,8 @@ def get_big_tasks():
 @app.post("/api/big-tasks", response_model=BigTaskResponse)
 def create_big_task(big_task: BigTaskCreate, user_id: str = Depends(get_admin_user)):
     bt_doc = big_task.dict()
-    bt_doc["id"] = generate_uuid()
+    if not bt_doc.get("id"):
+        bt_doc["id"] = generate_uuid()
     bt_doc["created_at"] = datetime.utcnow().isoformat()
     if bt_doc.get("progress") == 100:
         bt_doc["completed_at"] = datetime.utcnow().isoformat()
@@ -264,7 +266,8 @@ def get_sub_tasks():
 @app.post("/api/sub-tasks", response_model=SubTaskResponse)
 def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_user)):
     st_doc = sub_task.dict()
-    st_doc["id"] = generate_uuid()
+    if not st_doc.get("id"):
+        st_doc["id"] = generate_uuid()
     st_doc["created_at"] = datetime.utcnow().isoformat()
     if st_doc.get("progress") == 100:
         st_doc["completed_at"] = datetime.utcnow().isoformat()

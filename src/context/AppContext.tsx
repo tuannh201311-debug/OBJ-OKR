@@ -212,7 +212,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       const payloadOKR = {
          id: recalculated.id, title: recalculated.title, target: recalculated.type,
-         progress: recalculated.progress, objective: recalculated.title, deadline: recalculated.deadline,
+         progress: Number(recalculated.progress) || 0, objective: recalculated.title, deadline: recalculated.deadline,
          completed_at: recalculated.completed_at
       };
       // Upsert
@@ -222,7 +222,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       for (const bt of recalculated.children) {
         const payloadBT = {
           id: bt.id, okr_id: recalculated.id, title: bt.title, 
-          progress: bt.progress, weight: bt.weight, deadline: bt.deadline,
+          progress: Number(bt.progress) || 0, weight: Number(bt.weight) || 0, deadline: bt.deadline,
           completed_at: bt.completed_at
         };
         await fetchWithAuth(`/big-tasks/${bt.id}`, { method: 'PUT', body: JSON.stringify(payloadBT) })
@@ -231,7 +231,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         for (const st of bt.children) {
           const payloadST = {
             id: st.id, big_task_id: bt.id, title: st.title, assignee: st.assignee,
-            progress: st.progress, weight: st.weight, deadline: st.deadline,
+            progress: Number(st.progress) || 0, weight: Number(st.weight) || 0, deadline: st.deadline,
             status: st.status, note: st.note || '', completed_at: st.completed_at, attachments: st.attachments || []
           };
           await fetchWithAuth(`/sub-tasks/${st.id}`, { method: 'PUT', body: JSON.stringify(payloadST) })

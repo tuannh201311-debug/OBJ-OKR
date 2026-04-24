@@ -56,7 +56,8 @@ class OKRBase(BaseModel):
         return validate_date_format(v)
 
 class OKRCreate(OKRBase):
-    pass
+    id: Optional[str] = None
+    completed_at: Optional[str] = None
 
 class OKRResponse(OKRBase):
     id: str
@@ -78,7 +79,8 @@ class BigTaskBase(BaseModel):
         return validate_date_format(v)
 
 class BigTaskCreate(BigTaskBase):
-    pass
+    id: Optional[str] = None
+    completed_at: Optional[str] = None
 
 class BigTaskResponse(BigTaskBase):
     id: str
@@ -103,7 +105,8 @@ class SubTaskBase(BaseModel):
         return validate_date_format(v)
 
 class SubTaskCreate(SubTaskBase):
-    pass
+    id: Optional[str] = None
+    completed_at: Optional[str] = None
 
 class SubTaskResponse(SubTaskBase):
     id: str
