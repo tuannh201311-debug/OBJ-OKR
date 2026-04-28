@@ -201,7 +201,10 @@ export function Dashboard() {
              <div className="h-7 w-7 rounded-lg bg-amber-100 flex items-center justify-center shadow-sm">
                <Clock className="h-4 w-4 text-amber-600" />
              </div>
-             <h3 className="text-sm font-bold text-[#1e3a8a]">Hạn chót sắp tới</h3>
+             <div className="flex items-center gap-2">
+               <h3 className="text-sm font-bold text-[#1e3a8a]">Hạn chót sắp tới</h3>
+               <Badge className="bg-amber-100 text-amber-700 border-none px-2 py-0 h-5 text-[10px] font-black">{upcomingTasks.length}</Badge>
+             </div>
           </div>
           <div className="space-y-2 overflow-y-auto pr-1 scrollbar-hide flex-1">
             {upcomingTasks.map((task) => (
@@ -228,7 +231,10 @@ export function Dashboard() {
              <div className="h-7 w-7 rounded-lg bg-rose-100 flex items-center justify-center shadow-sm">
                <AlertCircle className="h-4 w-4 text-rose-600" />
              </div>
-             <h3 className="text-sm font-bold text-[#1e3a8a]">Chậm Deadline</h3>
+             <div className="flex items-center gap-2">
+               <h3 className="text-sm font-bold text-[#1e3a8a]">Chậm Deadline</h3>
+               <Badge className="bg-rose-100 text-rose-700 border-none px-2 py-0 h-5 text-[10px] font-black">{delayedTasks.length}</Badge>
+             </div>
           </div>
           <div className="space-y-2 overflow-y-auto pr-1 scrollbar-hide flex-1">
             {delayedTasks.map((task) => (
