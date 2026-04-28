@@ -78,7 +78,16 @@ def check_deadlines():
         for task in tasks:
             assignee = task.get('assignee', 'Chưa gán')
             title = task.get('title', '')
-            msg = f"⚠️ <b>CẢNH BÁO SẮP TỚI HẠN (Còn 2 ngày)</b>\n\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {target_date_str}\n\nVui lòng cập nhật tiến độ!"
+            
+            # Lấy thông tin OKR
+            okr_title = "Không xác định"
+            bt = big_tasks_collection.find_one({"id": task.get("big_task_id")})
+            if bt:
+                okr = okrs_collection.find_one({"id": bt.get("okr_id")})
+                if okr:
+                    okr_title = okr.get("title", "Không xác định")
+                    
+            msg = f"⚠️ <b>CẢNH BÁO SẮP TỚI HẠN (Còn 2 ngày)</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {target_date_str}\n\nVui lòng cập nhật tiến độ!"
             send_telegram_message(msg)
             time.sleep(1) # avoid rate limit
     except Exception as e:

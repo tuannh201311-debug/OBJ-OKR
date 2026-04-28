@@ -278,7 +278,16 @@ def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_us
     assignee = st_doc.get("assignee", "Chưa gán")
     title = st_doc.get("title", "")
     deadline = st_doc.get("deadline", "")
-    msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
+    
+    # Lấy thông tin OKR (Objective)
+    okr_title = "Không xác định"
+    bt = big_tasks_collection.find_one({"id": st_doc.get("big_task_id")})
+    if bt:
+        okr = okrs_collection.find_one({"id": bt.get("okr_id")})
+        if okr:
+            okr_title = okr.get("title", "Không xác định")
+            
+    msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
     send_telegram_message(msg)
     
     return st_doc
@@ -298,7 +307,16 @@ def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = De
         assignee = st_data.get("assignee", "Chưa gán")
         title = st_data.get("title", "")
         deadline = st_data.get("deadline", "")
-        msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
+        
+        # Lấy thông tin OKR (Objective)
+        okr_title = "Không xác định"
+        bt = big_tasks_collection.find_one({"id": st_data.get("big_task_id")})
+        if bt:
+            okr = okrs_collection.find_one({"id": bt.get("okr_id")})
+            if okr:
+                okr_title = okr.get("title", "Không xác định")
+                
+        msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
         send_telegram_message(msg)
         
         return st_data
