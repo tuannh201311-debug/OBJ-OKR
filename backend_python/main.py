@@ -20,6 +20,9 @@ from auth import (
 )
 from database import db
 from telegram_bot import start_telegram_polling, send_telegram_message
+from fastapi.responses import StreamingResponse
+import io
+from pdf_generator import generate_team_weekly_report
 
 start_telegram_polling()
 
@@ -379,6 +382,14 @@ def get_suggested_tasks(week: int, year: int, user_id: str = Depends(get_current
             doing.append(task_info)
             
     return {"done": done, "doing": doing}
+
+@app.get("/api/weekly-reports/combined/pdf", response_class=StreamingResponse)
+def get_combined_weekly_report_pdf(week: int, year: int, user_id: str = Depends(get_admin_user)):
+    pdf_bytes = generate_team_weekly_report(week, year)
+    headers = {
+        "Content-Disposition": f"attachment; filename=bao_cao_tuan_{year}_W{week}_tong_hop.pdf"
+    }
+    return StreamingResponse(io.BytesIO(pdf_bytes), media_type="application/pdf", headers=headers)
 
 @app.get("/api/reports/my-report", response_model=Optional[WeeklyReportResponse])
 def get_my_report(week: int, year: int, user_id: str = Depends(get_current_user)):

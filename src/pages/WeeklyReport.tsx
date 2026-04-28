@@ -205,6 +205,27 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
     });
   };
 
+  const exportTeamPDF = async () => {
+    try {
+      toast.info("Đang tạo PDF tổng hợp team, vui lòng chờ...");
+      const res = await fetchWithAuth(`/weekly-reports/combined/pdf?week=${selectedWeek}&year=${selectedYear}`);
+      if (!res.ok) throw new Error("Lỗi khi tạo PDF");
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Bao_Cao_Tuan_${selectedWeek}_${selectedYear}_Tong_Hop.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Tải PDF tổng hợp thành công!");
+    } catch (e: any) {
+      toast.error("Lỗi: " + e.message);
+    }
+  };
+
   if (!user) {
     return (
       <div className="h-[calc(100vh-80px)] flex items-center justify-center p-4">
@@ -262,8 +283,14 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
             )}
             <Button size="sm" onClick={exportToPDF} className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
               <FileText className="h-4 w-4 mr-2" />
-              Xuất PDF
+              Cá nhân
             </Button>
+            {isAdmin && (
+              <Button size="sm" onClick={exportTeamPDF} className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
+                <Layers className="h-4 w-4 mr-2" />
+                Team PDF
+              </Button>
+            )}
           </div>
         </div>
       </header>
