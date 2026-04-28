@@ -38,7 +38,12 @@ echo "--- ✅ Kiểm tra phiên bản... ---"
 docker --version
 docker compose version
 
-# 6. Khởi động ứng dụng
+# 6. Khởi tạo thư mục dữ liệu và phân quyền
+echo "--- 📁 Khởi tạo thư mục dữ liệu và phân quyền... ---"
+mkdir -p mongodb_data uploads
+sudo chmod -R 777 mongodb_data uploads
+
+# 7. Khởi động ứng dụng
 echo "--- 🏗️ Đang build và khởi động các containers (có thể mất vài phút)... ---"
 sudo docker compose up -d --build
 
