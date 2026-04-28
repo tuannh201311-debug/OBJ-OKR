@@ -24,15 +24,29 @@ def get_updates():
                 latest_chat_id = data['result'][-1]['message']['chat']['id']
                 if latest_chat_id != global_chat_id:
                     global_chat_id = latest_chat_id
-                    print(f"[Telegram Bot] Linked to chat ID: {global_chat_id}")
+                    # Persist to DB
+                    from database import db
+                    db["system_config"].update_one(
+                        {"key": "telegram_chat_id"},
+                        {"$set": {"value": global_chat_id}},
+                        upsert=True
+                    )
+                    print(f"[Telegram Bot] Linked and saved chat ID: {global_chat_id}")
     except Exception as e:
         print(f"[Telegram Bot] Error getting updates: {e}")
 
 def send_telegram_message(text: str):
     global global_chat_id
     if not global_chat_id:
-        # Try to fetch it if we don't have it
-        get_updates()
+        # Try to load from DB first
+        from database import db
+        config = db["system_config"].find_one({"key": "telegram_chat_id"})
+        if config:
+            global_chat_id = config["value"]
+        
+        if not global_chat_id:
+            # Try to fetch from API if still not found
+            get_updates()
         
     if global_chat_id:
         try:
