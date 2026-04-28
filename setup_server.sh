@@ -12,6 +12,20 @@ echo "--- 🔄 Cập nhật hệ thống... ---"
 sudo apt-get update
 sudo apt-get upgrade -y
 
+# 1.5 Tạo Swap (Tránh treo máy khi build RAM yếu)
+echo "--- 💾 Kiểm tra và tạo bộ nhớ ảo (Swap)... ---"
+if ! grep -q "swap" /etc/fstab; then
+  echo "Đang tạo 2GB Swap file..."
+  sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+  sudo chmod 600 /swapfile
+  sudo mkswap /swapfile
+  sudo swapon /swapfile
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+  echo "✅ Đã tạo Swap thành công!"
+else
+  echo "✅ Hệ thống đã có Swap, bỏ qua."
+fi
+
 # 2. Cài đặt các gói cần thiết
 echo "--- 📦 Cài đặt các gói phụ trợ... ---"
 sudo apt-get install -y ca-certificates curl gnupg lsb-release

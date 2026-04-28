@@ -7,8 +7,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source and build
+# Copy source and build (Optimized for low RAM)
 COPY . .
+ENV NODE_OPTIONS="--max_old_space_size=512"
 RUN npm run build
 
 # Production stage
