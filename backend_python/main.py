@@ -53,7 +53,8 @@ def read_root():
 # ================= AUTH API =================
 @app.post("/api/auth/signup", response_model=TokenResponse)
 def signup(user: UserCreate):
-    if users_collection.find_one({"email": user.email}):
+    # Case-insensitive check for existing email
+    if users_collection.find_one({"email": {"$regex": f"^{re.escape(user.email)}$", "$options": "i"}}):
         raise HTTPException(status_code=400, detail="Email already registered")
     
     user_id = generate_uuid()
@@ -78,7 +79,8 @@ def signup(user: UserCreate):
 
 @app.post("/api/auth/login", response_model=TokenResponse)
 def login(user: UserLogin):
-    user_doc = users_collection.find_one({"email": user.email})
+    # Case-insensitive search for email
+    user_doc = users_collection.find_one({"email": {"$regex": f"^{re.escape(user.email)}$", "$options": "i"}})
     if not user_doc or not verify_password(user.password, user_doc["hashed_password"]):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     
