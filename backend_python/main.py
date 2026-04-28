@@ -293,6 +293,14 @@ def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = De
         if st_data.get("progress") == 100:
             st_data["completed_at"] = datetime.utcnow().isoformat()
         sub_tasks_collection.insert_one(st_data)
+        
+        # Send Telegram notification for upserted task
+        assignee = st_data.get("assignee", "Chưa gán")
+        title = st_data.get("title", "")
+        deadline = st_data.get("deadline", "")
+        msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
+        send_telegram_message(msg)
+        
         return st_data
     
     if st_data.get("progress") == 100 and existing.get("progress", 0) < 100:
