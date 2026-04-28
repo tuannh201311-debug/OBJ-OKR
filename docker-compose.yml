@@ -6,7 +6,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongo-data:/data/db
+      - ./mongodb_data:/data/db
     environment:
       - MONGO_INITDB_DATABASE=okr_app
 
@@ -35,6 +35,3 @@ services:
       - backend
     ports:
       - "80:80"
-
-volumes:
-  mongo-data:
