@@ -282,12 +282,6 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
               </Button>
             )}
             {isAdmin && (
-              <Button size="sm" onClick={exportToPDF} className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
-                <FileText className="h-4 w-4 mr-2" />
-                Cá nhân
-              </Button>
-            )}
-            {isAdmin && (
               <Button size="sm" onClick={exportTeamPDF} className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-none rounded-xl h-10 font-bold shadow-sm px-4 print:hidden">
                 <Layers className="h-4 w-4 mr-2" />
                 Team PDF
