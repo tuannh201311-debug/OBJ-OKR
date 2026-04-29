@@ -6,14 +6,9 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - mongodb_data:/data/db   # use named volume for persistence
+      - ./mongodb_data:/data/db
     environment:
       - MONGO_INITDB_DATABASE=okr_app
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   backend:
     build:
@@ -40,7 +35,3 @@ services:
       - backend
     ports:
       - "80:80"
-
-volumes:
-  mongodb_data:
-    driver: local
