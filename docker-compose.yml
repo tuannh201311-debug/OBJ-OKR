@@ -1,6 +1,6 @@
 services:
   db:
-    image: mongo:6.0
+    image: mongo:latest
     container_name: okr-mongodb
     restart: always
     ports:
