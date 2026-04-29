@@ -1,6 +1,6 @@
 services:
   db:
-    image: mongo:latest
+    image: mongo:6.0
     container_name: okr-mongodb
     restart: always
     ports:
@@ -9,6 +9,11 @@ services:
       - ./mongodb_data:/data/db
     environment:
       - MONGO_INITDB_DATABASE=okr_app
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   backend:
     build:
