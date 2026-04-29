@@ -281,6 +281,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadSystemUsers();
   }, [user]);
 
+  // Tự động logout sau 10 phút không thao tác
+  useEffect(() => {
+    if (!user) return;
+
+    let timeoutId: any;
+
+    const resetTimer = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        console.log("Không có thao tác trong 10 phút, tự động đăng xuất...");
+        logout();
+      }, 10 * 60 * 1000); // 10 phút
+    };
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    resetTimer();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [user]);
+
   const logout = async () => {
     localStorage.removeItem("token");
     setUser(null);
