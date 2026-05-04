@@ -3,12 +3,15 @@ services:
     image: mongo:latest
     container_name: okr-mongodb
     restart: always
-    ports:
-      - "27017:27017"
+    # Xóa port 27017 để tránh bị hack
+    # ports:
+    #   - "27017:27017"
     volumes:
       - ./mongodb_data:/data/db
     environment:
       - MONGO_INITDB_DATABASE=okr_app
+      - MONGO_INITDB_ROOT_USERNAME=admin_okr
+      - MONGO_INITDB_ROOT_PASSWORD=VeryStrongPassword123!
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 30s
@@ -22,7 +25,7 @@ services:
     container_name: okr-backend
     restart: always
     environment:
-      - MONGODB_URI=mongodb://db:27017
+      - MONGODB_URI=mongodb://admin_okr:VeryStrongPassword123!@db:27017/okr_app?authSource=admin
       - DATABASE_NAME=okr_app
       - SECRET_KEY=your_super_secret_key_change_me
     depends_on:
