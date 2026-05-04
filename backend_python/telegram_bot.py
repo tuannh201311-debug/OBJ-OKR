@@ -66,30 +66,40 @@ from datetime import datetime, timedelta
 def check_deadlines():
     try:
         now = datetime.utcnow()
-        target_date = now + timedelta(days=2)
-        target_date_str = target_date.strftime("%Y-%m-%d")
+        today = now.date()
         
-        # Find subtasks that have deadline = target_date_str and are not done
+        # Lấy tất cả task chưa hoàn thành
         tasks = list(sub_tasks_collection.find({
-            "deadline": target_date_str,
             "progress": {"$lt": 100}
         }))
         
         for task in tasks:
-            assignee = task.get('assignee', 'Chưa gán')
-            title = task.get('title', '')
-            
-            # Lấy thông tin OKR
-            okr_title = "Không xác định"
-            bt = big_tasks_collection.find_one({"id": task.get("big_task_id")})
-            if bt:
-                okr = okrs_collection.find_one({"id": bt.get("okr_id")})
-                if okr:
-                    okr_title = okr.get("title", "Không xác định")
+            deadline_str = task.get("deadline")
+            if not deadline_str:
+                continue
+                
+            try:
+                deadline_date = datetime.strptime(deadline_str, "%Y-%m-%d").date()
+                days_left = (deadline_date - today).days
+                
+                # Báo khi còn đúng 7, 5, 3, 1 ngày
+                if days_left in [7, 5, 3, 1]:
+                    assignee = task.get('assignee', 'Chưa gán')
+                    title = task.get('title', '')
                     
-            msg = f"⚠️ <b>CẢNH BÁO SẮP TỚI HẠN (Còn 2 ngày)</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {target_date_str}\n\nVui lòng cập nhật tiến độ!"
-            send_telegram_message(msg)
-            time.sleep(1) # avoid rate limit
+                    # Lấy thông tin OKR
+                    okr_title = "Không xác định"
+                    bt = big_tasks_collection.find_one({"id": task.get("big_task_id")})
+                    if bt:
+                        okr = okrs_collection.find_one({"id": bt.get("okr_id")})
+                        if okr:
+                            okr_title = okr.get("title", "Không xác định")
+                            
+                    msg = f"⚠️ <b>CẢNH BÁO SẮP TỚI HẠN (Còn {days_left} ngày)</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline_str}\n\nVui lòng cập nhật tiến độ!"
+                    send_telegram_message(msg)
+                    time.sleep(1) # avoid rate limit
+            except ValueError:
+                continue
     except Exception as e:
         print(f"[Telegram Bot] Error checking deadlines: {e}")
 
