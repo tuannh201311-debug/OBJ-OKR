@@ -14,8 +14,9 @@ export function Dashboard() {
   const { okrs, setHighlightTaskId } = useAppContext();
   const navigate = useNavigate();
 
-  const totalOkrProgress = okrs.length > 0
-    ? Math.round(okrs.reduce((acc, okr) => acc + okr.progress, 0) / okrs.length)
+  const totalWeight = okrs.reduce((acc, okr) => acc + (okr.weight || 1), 0);
+  const totalOkrProgress = okrs.length > 0 && totalWeight > 0
+    ? Math.round(okrs.reduce((acc, okr) => acc + (okr.progress * (okr.weight || 1)), 0) / totalWeight)
     : 0;
 
   const overallProgressData = [

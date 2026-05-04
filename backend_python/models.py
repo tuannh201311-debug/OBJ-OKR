@@ -48,6 +48,7 @@ class OKRBase(BaseModel):
     deadline: Optional[str] = "2026-12-31"
     target: Optional[str] = "OKR"
     progress: Optional[float] = Field(0.0, ge=0, le=100)
+    weight: Optional[float] = 1.0
     order: Optional[int] = 0
 
 

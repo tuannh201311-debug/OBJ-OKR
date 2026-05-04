@@ -3,7 +3,7 @@ import { fetchWithAuth } from '@/lib/api';
 
 export type SubTask = { id: string; title: string; assignee: string; progress: number; weight: number; deadline: string; status: string; note?: string; attachments?: string[]; big_task_id?: string; completed_at?: string; };
 export type BigTask = { id: string; title: string; progress: number; weight: number; deadline: string; children: SubTask[]; okr_id?: string; completed_at?: string; };
-export type OKR = { id: string; title: string; type: string; progress: number; deadline: string; children: BigTask[]; user_id?: string; completed_at?: string; };
+export type OKR = { id: string; title: string; type: string; progress: number; weight?: number; deadline: string; children: BigTask[]; user_id?: string; completed_at?: string; };
 
 interface AppUser {
   uid: string;
@@ -164,6 +164,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         title: okr.title,
         type: okr.target || 'OKR',
         progress: okr.progress || 0,
+        weight: okr.weight || 1,
         deadline: okr.deadline || '2026-12-31',
         completed_at: okr.completed_at,
         user_id: okr.user_id,
@@ -223,7 +224,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       const payloadOKR = {
          id: recalculated.id, title: recalculated.title, target: recalculated.type,
-         progress: Number(recalculated.progress) || 0, objective: recalculated.title, deadline: recalculated.deadline,
+         progress: Number(recalculated.progress) || 0, weight: Number(recalculated.weight) || 1, objective: recalculated.title, deadline: recalculated.deadline,
          completed_at: recalculated.completed_at
       };
       
@@ -330,13 +331,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     await syncOkrsToDb([recalculated]);
   };
 
-  const addOkr = async (title: string, deadline: string) => {
-    await saveOkr({ id: generateId(), title, type: 'OKR', progress: 0, deadline, children: [] });
+  const addOkr = async (title: string, weight: number, deadline: string) => {
+    await saveOkr({ id: generateId(), title, type: 'OKR', progress: 0, weight, deadline, children: [] });
   };
-  const updateOkr = async (okrId: string, title: string, deadline: string) => {
+  const updateOkr = async (okrId: string, title: string, weight: number, deadline: string) => {
     const okr = okrs.find(o => o.id === okrId);
     if (okr) {
-      await saveOkr({ ...okr, title, deadline });
+      await saveOkr({ ...okr, title, weight, deadline });
     }
   };
   const deleteOkr = async (okrId: string) => {

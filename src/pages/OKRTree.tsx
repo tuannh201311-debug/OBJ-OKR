@@ -209,8 +209,8 @@ export function OKRTree() {
     if (!formTitle) return toast.error('Vui lòng nhập tiêu đề');
 
     try {
-      if (dialogType === 'add-okr') await addOkr(formTitle, formDeadline);
-      if (dialogType === 'edit-okr') await updateOkr(okrToEdit.id, formTitle, formDeadline);
+      if (dialogType === 'add-okr') await addOkr(formTitle, formWeight, formDeadline);
+      if (dialogType === 'edit-okr') await updateOkr(okrToEdit.id, formTitle, formWeight, formDeadline);
       if (dialogType === 'add-bt') await addBigTask(targetOkrId!, { title: formTitle, weight: formWeight, deadline: formDeadline });
       if (dialogType === 'edit-bt') await updateBigTask(targetOkrId!, btToEdit.id, formTitle, formWeight, formDeadline);
       if (dialogType === 'add-st') await addSubTask(targetOkrId!, targetBtId!, { title: formTitle, weight: formWeight, deadline: formDeadline, assignee: formAssignee.join(', '), progress: formProgress, status: 'todo', note: formNote, attachments: formAttachments });
@@ -431,7 +431,6 @@ export function OKRTree() {
                   />
                 </div>
               </div>
-              {(dialogType?.includes('bt') || dialogType?.includes('st')) && (
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2 text-[#475569] text-[11px] uppercase font-black tracking-[0.2em] ml-1">
                     <Activity className="h-4 w-4 text-[#6366f1]" /> Trọng số (Weight)
@@ -446,7 +445,6 @@ export function OKRTree() {
                     step={0.1}
                   />
                 </div>
-              )}
             </div>
 
             {(dialogType === 'add-st' || dialogType === 'edit-st') && (
@@ -643,7 +641,10 @@ export function OKRTree() {
                           </div>
                         )}
                         <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'}`} />
-                        <span className="truncate max-w-[500px]">OBJ: {okr.title}</span>
+                        <div className="flex items-center gap-2 max-w-[500px]">
+                          <span className="truncate">OBJ: {okr.title}</span>
+                          {okr.weight && <Badge variant="secondary" className="bg-[#6366f1]/10 text-[#6366f1] border-none text-[9px] font-black px-1.5 py-0 h-4">W: {okr.weight}</Badge>}
+                        </div>
                       </div>
                       <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
                       <div className={`text-[12px] font-bold ${dlStatusOkr.color} text-center`}>{okr.deadline}</div>
