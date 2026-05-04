@@ -9,3 +9,5 @@ python-multipart
 email-validator
 fpdf2
 slowapi
+fastapi-cache2
+jinja2
