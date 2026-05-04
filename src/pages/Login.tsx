@@ -59,12 +59,6 @@ export function Login() {
                 <Shield className="h-8 w-8 text-white" />
               </div>
             </div>
-            <div className="space-y-1">
-              <CardTitle className="text-3xl font-fira-code font-bold text-[#1e3a8a]">Chào mừng trở lại</CardTitle>
-              <CardDescription className="text-[#64748b] font-medium flex items-center justify-center gap-2">
-                <Sparkles className="h-3.5 w-3.5" /> Quản lý OKR Chiến lược 9Pay
-              </CardDescription>
-            </div>
           </CardHeader>
 
           <CardContent className="p-10 pt-0">
@@ -116,12 +110,6 @@ export function Login() {
                 ) : 'Đăng nhập'}
               </Button>
             </form>
-
-            <div className="mt-8 text-center">
-              <p className="text-[10px] text-[#64748b] font-bold uppercase tracking-widest">
-                Bảo mật theo tiêu chuẩn doanh nghiệp
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>
