@@ -643,7 +643,6 @@ export function OKRTree() {
                         <div className={`h-2.5 w-2.5 rounded-full ${dlStatusOkr.variant === 'destructive' ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]' : 'bg-[#2563eb] shadow-[0_0_6px_#2563eb]'}`} />
                         <div className="flex items-center gap-2 max-w-[500px]">
                           <span className="truncate">OBJ: {okr.title}</span>
-                          {okr.weight && <Badge variant="secondary" className="bg-[#6366f1]/10 text-[#6366f1] border-none text-[9px] font-black px-1.5 py-0 h-4">W: {okr.weight}</Badge>}
                         </div>
                       </div>
                       <div className="text-base font-black text-[#1e3a8a] text-center">{okr.progress}%</div>
