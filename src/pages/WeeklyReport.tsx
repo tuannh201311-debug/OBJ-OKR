@@ -17,6 +17,7 @@ interface TaskInfo {
   title: string;
   okr_title: string;
   big_task_title?: string;
+  progress?: number;
 }
 
 interface Report {
@@ -152,7 +153,7 @@ export function WeeklyReport() {
     if (isAlreadySelected) {
       setDoneTasks(p => p.filter(d => d.id !== st.id));
     } else {
-      setDoneTasks(p => [...p, { id: st.id, title: st.title, okr_title: okrTitle, big_task_title: planTitle }]);
+      setDoneTasks(p => [...p, { id: st.id, title: st.title, okr_title: okrTitle, big_task_title: planTitle, progress: st.progress }]);
     }
   };
 
@@ -163,13 +164,13 @@ export function WeeklyReport() {
 **Ngày nộp:** ${report.submitted_at ? new Date(report.submitted_at).toLocaleDateString('vi-VN') : 'Chưa nộp'}
 
 ## 1. Công việc thực hiện trong tuần
-${report.done_tasks?.length ? report.done_tasks.map(t => `- [x] ${t.title} (${t.okr_title}${t.big_task_title ? ` - ${t.big_task_title}` : ''})`).join('\n') : '- Không có'}
+${report.done_tasks?.length ? report.done_tasks.map(t => `- [x] [${t.progress || 0}%] ${t.title}\n  * OBJ: ${t.okr_title}\n  * Plan: ${t.big_task_title || 'Không có'}`).join('\n') : '- Không có'}
 
 ## 2. Công việc phát sinh ngoài OKR
 ${report.ad_hoc_tasks?.length ? report.ad_hoc_tasks.map(t => `- [x] ${t}`).join('\n') : '- Không có'}
 
 ## 3. Công việc đang triển khai
-${report.doing_tasks?.length ? report.doing_tasks.map(t => `- [/] ${t.title} (${t.okr_title}${t.big_task_title ? ` - ${t.big_task_title}` : ''})`).join('\n') : '- Không có'}
+${report.doing_tasks?.length ? report.doing_tasks.map(t => `- [/] [${t.progress || 0}%] ${t.title}\n  * OBJ: ${t.okr_title}\n  * Plan: ${t.big_task_title || 'Không có'}`).join('\n') : '- Không có'}
 
 ## 4. Khó khăn & Thách thức
 ${report.challenges || '- Không có'}
@@ -414,10 +415,13 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {doneTasks.map((t, idx) => (
                     <div key={idx} className="flex items-center justify-between p-4 bg-white/40 border border-white/60 rounded-2xl group hover:border-[#2563eb] transition-all shadow-sm">
-                      <div className="flex flex-col min-w-0 pr-2">
-                        <span className="text-[14px] font-bold text-[#1e3a8a] truncate">{t.title}</span>
-                        <span className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1 opacity-60">
-                          {t.okr_title} {t.big_task_title ? ` • ${t.big_task_title}` : ''}
+                      <div className="flex flex-col min-w-0 pr-2 gap-1.5">
+                        <div className="flex items-center gap-2">
+                           <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none px-2 py-0.5">{t.progress || 0}%</Badge>
+                           <span className="text-[14px] font-bold text-[#1e3a8a] truncate">{t.title}</span>
+                        </div>
+                        <span className="text-[11px] text-[#64748b] font-medium truncate">
+                          <strong className="text-[#1e3a8a]">OBJ:</strong> {t.okr_title} <span className="mx-1 text-slate-300">|</span> <strong className="text-[#1e3a8a]">Plan:</strong> {t.big_task_title || 'Không có'}
                         </span>
                       </div>
                       <button onClick={() => setDoneTasks(p => p.filter((_, i) => i !== idx))} className="h-9 w-9 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
@@ -556,9 +560,12 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {viewingReport.done_tasks.map((t, idx) => (
                       <div key={idx} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
-                        <p className="text-[14px] font-bold text-[#1e293b]">{t.title}</p>
-                        <p className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1.5">
-                          {t.okr_title} {t.big_task_title ? ` • ${t.big_task_title}` : ''}
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none px-2 py-0.5">{t.progress || 0}%</Badge>
+                          <p className="text-[14px] font-bold text-[#1e293b]">{t.title}</p>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          <strong className="text-slate-700">OBJ:</strong> {t.okr_title} <span className="mx-1 text-slate-300">|</span> <strong className="text-slate-700">Plan:</strong> {t.big_task_title || 'Không có'}
                         </p>
                       </div>
                     ))}
