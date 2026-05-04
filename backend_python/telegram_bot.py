@@ -82,8 +82,8 @@ def check_deadlines():
                 deadline_date = datetime.strptime(deadline_str, "%Y-%m-%d").date()
                 days_left = (deadline_date - today).days
                 
-                # Báo khi còn đúng 7, 5, 3, 1 ngày
-                if days_left in [7, 5, 3, 1]:
+                # Báo khi còn đúng 7, 3, 1 ngày
+                if days_left in [7, 3, 1]:
                     assignee = task.get('assignee', 'Chưa gán')
                     title = task.get('title', '')
                     
