@@ -21,8 +21,8 @@ class PDFReport(FPDF):
         self.week = week
         self.year = year
         ensure_fonts()
-        self.add_font("Roboto", "", "fonts/Roboto-Regular.ttf", uni=True)
-        self.add_font("Roboto", "B", "fonts/Roboto-Bold.ttf", uni=True)
+        self.add_font("Roboto", "", "fonts/Roboto-Regular.ttf")
+        self.add_font("Roboto", "B", "fonts/Roboto-Bold.ttf")
 
     def header(self):
         self.set_font("Roboto", "B", 16)
@@ -75,7 +75,7 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
     if not sorted_assignees:
         pdf.set_font("Roboto", "", 12)
         pdf.cell(0, 10, "Không có dữ liệu công việc.", ln=True)
-        return pdf.output(dest='S').encode('latin1')
+        return bytes(pdf.output())
 
     for assignee in sorted_assignees:
         # Member Header
@@ -128,4 +128,4 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
             pdf.ln(4)
         pdf.ln(5)
 
-    return pdf.output(dest='S').encode('latin1')
+    return bytes(pdf.output())
