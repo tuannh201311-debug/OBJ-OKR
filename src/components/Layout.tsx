@@ -31,7 +31,7 @@ export function Layout() {
             <Shield className="h-7 w-7 text-white" />
           </div>
           <div>
-            <span className="block text-xl font-fira-code font-bold text-[#1e3a8a] leading-none">9Pay OKR</span>
+            <span className="block text-xl font-fira-code font-bold text-[#1e3a8a] leading-none">9Pay - Techlab</span>
             <span className="text-[11px] font-black text-[#2563eb] uppercase tracking-widest mt-1 block">Hệ thống quản lý</span>
           </div>
         </div>

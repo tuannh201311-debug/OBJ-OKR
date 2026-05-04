@@ -135,7 +135,8 @@ export function Viewer() {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <span className="block text-lg font-fira-code font-bold text-[#1e3a8a] leading-none">9Pay OKR</span>
+            <span className="block text-lg font-fira-code font-bold text-[#1e3a8a] leading-none">9Pay - Techlab</span>
+            <span className="text-[9px] font-black text-[#2563eb] uppercase tracking-widest mt-1 block">Hệ thống quản lý</span>
             <div className="flex items-center gap-2 mt-1">
               <Badge className="bg-blue-50 text-[#2563eb] text-[8px] h-4 px-1.5 border-none font-black uppercase tracking-widest"><Eye className="h-2.5 w-2.5 mr-1" /> Public View</Badge>
             </div>
