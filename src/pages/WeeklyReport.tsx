@@ -16,6 +16,7 @@ interface TaskInfo {
   id: string;
   title: string;
   okr_title: string;
+  big_task_title?: string;
 }
 
 interface Report {
@@ -146,12 +147,12 @@ export function WeeklyReport() {
     setNewAdHoc('');
   };
 
-  const toggleTaskSelection = (st: SubTask, okrTitle: string) => {
+  const toggleTaskSelection = (st: SubTask, okrTitle: string, planTitle: string) => {
     const isAlreadySelected = doneTasks.find(d => d.id === st.id);
     if (isAlreadySelected) {
       setDoneTasks(p => p.filter(d => d.id !== st.id));
     } else {
-      setDoneTasks(p => [...p, { id: st.id, title: st.title, okr_title: okrTitle }]);
+      setDoneTasks(p => [...p, { id: st.id, title: st.title, okr_title: okrTitle, big_task_title: planTitle }]);
     }
   };
 
@@ -162,13 +163,13 @@ export function WeeklyReport() {
 **Ngày nộp:** ${report.submitted_at ? new Date(report.submitted_at).toLocaleDateString('vi-VN') : 'Chưa nộp'}
 
 ## 1. Công việc thực hiện trong tuần
-${report.done_tasks?.length ? report.done_tasks.map(t => `- [x] ${t.title} (${t.okr_title})`).join('\n') : '- Không có'}
+${report.done_tasks?.length ? report.done_tasks.map(t => `- [x] ${t.title} (${t.okr_title}${t.big_task_title ? ` - ${t.big_task_title}` : ''})`).join('\n') : '- Không có'}
 
 ## 2. Công việc phát sinh ngoài OKR
 ${report.ad_hoc_tasks?.length ? report.ad_hoc_tasks.map(t => `- [x] ${t}`).join('\n') : '- Không có'}
 
 ## 3. Công việc đang triển khai
-${report.doing_tasks?.length ? report.doing_tasks.map(t => `- [/] ${t.title} (${t.okr_title})`).join('\n') : '- Không có'}
+${report.doing_tasks?.length ? report.doing_tasks.map(t => `- [/] ${t.title} (${t.okr_title}${t.big_task_title ? ` - ${t.big_task_title}` : ''})`).join('\n') : '- Không có'}
 
 ## 4. Khó khăn & Thách thức
 ${report.challenges || '- Không có'}
@@ -359,7 +360,7 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                                         return (
                                           <button 
                                             key={st.id} 
-                                            onClick={() => toggleTaskSelection(st, okr.title)}
+                                            onClick={() => toggleTaskSelection(st, okr.title, bt.title)}
                                             className={`flex items-start gap-4 p-5 rounded-[1.5rem] border transition-all text-left relative group ${isSelected ? 'bg-white border-[#2563eb] shadow-xl shadow-blue-100/50 ring-2 ring-blue-50' : 'bg-white border-slate-100 hover:border-blue-200 hover:shadow-md'}`}
                                           >
                                             <div className={`mt-0.5 h-6 w-6 rounded-xl border-2 flex items-center justify-center transition-all duration-300 ${isSelected ? 'bg-[#2563eb] border-[#2563eb] scale-110' : 'border-slate-200 bg-slate-50 group-hover:border-blue-200'}`}>
@@ -409,7 +410,9 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                     <div key={idx} className="flex items-center justify-between p-4 bg-white/40 border border-white/60 rounded-2xl group hover:border-[#2563eb] transition-all shadow-sm">
                       <div className="flex flex-col min-w-0 pr-2">
                         <span className="text-[14px] font-bold text-[#1e3a8a] truncate">{t.title}</span>
-                        <span className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1 opacity-60">{t.okr_title}</span>
+                        <span className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1 opacity-60">
+                          {t.okr_title} {t.big_task_title ? ` • ${t.big_task_title}` : ''}
+                        </span>
                       </div>
                       <button onClick={() => setDoneTasks(p => p.filter((_, i) => i !== idx))} className="h-9 w-9 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-xl transition-colors">
                         <Trash2 className="h-4 w-4" />
@@ -548,7 +551,9 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                     {viewingReport.done_tasks.map((t, idx) => (
                       <div key={idx} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
                         <p className="text-[14px] font-bold text-[#1e293b]">{t.title}</p>
-                        <p className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1.5">{t.okr_title}</p>
+                        <p className="text-[10px] text-[#2563eb] font-black uppercase tracking-wider mt-1.5">
+                          {t.okr_title} {t.big_task_title ? ` • ${t.big_task_title}` : ''}
+                        </p>
                       </div>
                     ))}
                     {!viewingReport.done_tasks.length && <p className="text-sm italic text-slate-400">Không có</p>}
