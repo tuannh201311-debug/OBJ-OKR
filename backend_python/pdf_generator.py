@@ -48,11 +48,11 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
         pdf.cell(0, 10, "Chưa có báo cáo nào được nộp trong tuần này.", ln=True)
         return bytes(pdf.output())
 
-    # Sort reports by user_name
-    reports.sort(key=lambda r: r.get("user_name", ""))
+    # Sort reports by user_name safely handling None
+    reports.sort(key=lambda r: r.get("user_name") or "")
 
     for report in reports:
-        user_name = report.get("user_name", "Không xác định")
+        user_name = report.get("user_name") or "Không xác định"
         
         # Member Header
         pdf.set_font("Roboto", "B", 14)
@@ -62,7 +62,7 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
         pdf.ln(2)
         
         # 1. Công việc đã thực hiện
-        done_tasks = report.get("done_tasks", [])
+        done_tasks = report.get("done_tasks") or []
         pdf.set_font("Roboto", "B", 11)
         pdf.set_text_color(22, 163, 74) # Green
         pdf.cell(0, 8, "1. Công việc thực hiện trong tuần", ln=True)
@@ -79,7 +79,7 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
         pdf.ln(2)
 
         # 2. Công việc ngoài OKR
-        ad_hoc = report.get("ad_hoc_tasks", [])
+        ad_hoc = report.get("ad_hoc_tasks") or []
         pdf.set_font("Roboto", "B", 11)
         pdf.set_text_color(217, 119, 6) # Orange
         pdf.cell(0, 8, "2. Công việc ngoài OKR", ln=True)
@@ -94,7 +94,7 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
         pdf.ln(2)
 
         # 3. Công việc đang triển khai
-        doing_tasks = report.get("doing_tasks", [])
+        doing_tasks = report.get("doing_tasks") or []
         pdf.set_font("Roboto", "B", 11)
         pdf.set_text_color(37, 99, 235) # Blue
         pdf.cell(0, 8, "3. Công việc đang triển khai", ln=True)
@@ -111,7 +111,7 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
         pdf.ln(2)
 
         # 4. Khó khăn
-        challenges = report.get("challenges", "")
+        challenges = report.get("challenges") or ""
         pdf.set_font("Roboto", "B", 11)
         pdf.set_text_color(225, 29, 72) # Red
         pdf.cell(0, 8, "4. Khó khăn & Thách thức", ln=True)
@@ -121,7 +121,7 @@ def generate_team_weekly_report(week: int, year: int) -> bytes:
         pdf.ln(2)
 
         # 5. Kế hoạch tuần tới
-        next_plan = report.get("next_week_plan", "")
+        next_plan = report.get("next_week_plan") or ""
         pdf.set_font("Roboto", "B", 11)
         pdf.set_text_color(15, 23, 42)
         pdf.cell(0, 8, "5. Kế hoạch tuần tới", ln=True)
