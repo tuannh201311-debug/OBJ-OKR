@@ -1,5 +1,6 @@
 import re
-from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.staticfiles import StaticFiles
 import os
 import shutil
@@ -23,10 +24,17 @@ from telegram_bot import start_telegram_polling, send_telegram_message
 from fastapi.responses import StreamingResponse
 import io
 from pdf_generator import generate_team_weekly_report
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
 
 start_telegram_polling()
 
 app = FastAPI(title="OKR Management API")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,8 +62,15 @@ def read_root():
     return {"status": "ok"}
 
 # ================= AUTH API =================
+from pydantic import BaseModel
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+from auth import create_refresh_token
+
 @app.post("/api/auth/signup", response_model=TokenResponse)
-def signup(user: UserCreate):
+@limiter.limit("5/minute")
+def signup(request: Request, user: UserCreate):
     # Case-insensitive check for existing email
     if users_collection.find_one({"email": {"$regex": f"^{re.escape(user.email)}$", "$options": "i"}}):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -74,22 +89,27 @@ def signup(user: UserCreate):
     users_collection.insert_one(user_doc)
     
     access_token = create_access_token(data={"sub": user_id})
+    refresh_token = create_refresh_token(data={"sub": user_id})
     return {
-        "access_token": access_token, 
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": {"id": user_id, "email": user.email, "display_name": user.display_name, "role": role}
     }
 
 @app.post("/api/auth/login", response_model=TokenResponse)
-def login(user: UserLogin):
+@limiter.limit("10/minute")
+def login(request: Request, user: UserLogin):
     # Case-insensitive search for email
     user_doc = users_collection.find_one({"email": {"$regex": f"^{re.escape(user.email)}$", "$options": "i"}})
     if not user_doc or not verify_password(user.password, user_doc["hashed_password"]):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     
     access_token = create_access_token(data={"sub": user_doc["id"]})
+    refresh_token = create_refresh_token(data={"sub": user_doc["id"]})
     return {
-        "access_token": access_token, 
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": {
             "id": user_doc["id"], 
@@ -98,6 +118,36 @@ def login(user: UserLogin):
             "role": user_doc.get("role", "user")
         }
     }
+
+from auth import SECRET_KEY, ALGORITHM
+import jwt
+from jwt.exceptions import InvalidTokenError
+
+@app.post("/api/auth/refresh")
+@limiter.limit("5/minute")
+def refresh_token(request: Request, req: RefreshRequest):
+    try:
+        payload = jwt.decode(req.refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        token_type = payload.get("type")
+        if user_id is None or token_type != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+        # Verify user still exists
+        user_doc = users_collection.find_one({"id": user_id})
+        if not user_doc:
+             raise HTTPException(status_code=401, detail="User not found")
+             
+        new_access_token = create_access_token(data={"sub": user_id})
+        new_refresh_token = create_refresh_token(data={"sub": user_id})
+        
+        return {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer"
+        }
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 @app.get("/api/auth/me", response_model=UserResponse)
 def get_me(user_id: str = Depends(get_current_user)):
