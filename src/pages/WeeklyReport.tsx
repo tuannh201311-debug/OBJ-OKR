@@ -355,7 +355,13 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
                                       <span className="text-[14px] font-bold text-[#1e3a8a] opacity-90">{bt.title}</span>
                                    </div>
                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6">
-                                      {bt.children.filter(st => st.title.toLowerCase().includes(pickerSearch.toLowerCase())).map(st => {
+                                      {bt.children
+                                        .filter(st => st.title.toLowerCase().includes(pickerSearch.toLowerCase()))
+                                        .filter(st => {
+                                          const assignees = st.assignee ? st.assignee.split(',').map(a => a.trim()) : [];
+                                          return assignees.length === 0 || assignees.includes('Chưa gán') || assignees.includes(user?.name || '');
+                                        })
+                                        .map(st => {
                                         const isSelected = doneTasks.find(d => d.id === st.id);
                                         return (
                                           <button 
