@@ -189,7 +189,7 @@ export function OKRTree() {
       setFormProgress(item.progress || 0);
       setFormNote(item.note || '');
       setFormAttachments((item as SubTask).attachments || []);
-      setFormAssignee(item.assignee ? item.assignee.split(',').map((s: string) => s.trim()) : []);
+      setFormAssignee(item.assignee ? item.assignee.split(',').map((s: string) => s.trim()).filter(s => s && s !== 'Chưa gán') : []);
 
       if (type === 'edit-okr') setOkrToEdit(item);
       if (type === 'edit-bt') setBtToEdit(item);
@@ -720,13 +720,20 @@ export function OKRTree() {
                                     <div className={`text-[11px] font-bold ${stStatus.color} text-center`}>{subTask.deadline}</div>
                                     <div className="flex items-center justify-center gap-3">
                                       <div className="flex -space-x-1.5">
-                                        {subTask.assignee.split(',').map((name, i) => (
+                                        {subTask.assignee.split(',').filter(name => name.trim() && name.trim() !== 'Chưa gán').map((name, i) => (
                                           <div key={i} className="h-7 w-7 rounded-full border-2 border-white text-[8px] flex items-center justify-center text-white font-black shadow-sm bg-blue-500">
                                             {name.trim().substring(0, 2).toUpperCase()}
                                           </div>
                                         ))}
+                                        {(!subTask.assignee || subTask.assignee === 'Chưa gán' || subTask.assignee.trim() === '') && (
+                                          <div className="h-7 w-7 rounded-full border-2 border-white text-[8px] flex items-center justify-center text-white font-black shadow-sm bg-slate-400">
+                                            CH
+                                          </div>
+                                        )}
                                       </div>
-                                      <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">{subTask.assignee}</span>
+                                      <span className="text-[11px] font-bold text-[#1e3a8a] truncate max-w-[100px]">
+                                        {subTask.assignee.split(',').filter(name => name.trim() && name.trim() !== 'Chưa gán').join(', ') || 'Chưa gán'}
+                                      </span>
                                     </div>
                                     <div className="flex justify-end pr-2 gap-1">
                                       <Badge variant="outline" className={`whitespace-nowrap text-center text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${stStatus.badgeClass}`}>{stStatus.label}</Badge>

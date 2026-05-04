@@ -212,7 +212,7 @@ export function Dashboard() {
                 <div className="flex-1 min-w-0 pr-4">
                   <h4 className="text-[14px] font-bold text-[#1e3a8a] truncate leading-tight">{task.title}</h4>
                   <div className="flex items-center mt-1.5 gap-3">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase">{task.assignee}</span>
+                    <span className="text-[10px] font-bold text-[#64748b] uppercase">{task.assignee?.split(',').filter((n: string) => n.trim() && n.trim() !== 'Chưa gán').join(', ') || 'Chưa gán'}</span>
                     <span className="text-[10px] text-amber-600 font-bold uppercase">• Còn {task.daysLeft === 0 ? 'Hôm nay' : `${task.daysLeft} ngày`}</span>
                   </div>
                 </div>
@@ -242,7 +242,7 @@ export function Dashboard() {
                 <div className="flex-1 min-w-0 pr-4">
                   <h4 className="text-[14px] font-bold text-[#1e3a8a] truncate leading-tight">{task.title}</h4>
                   <div className="flex items-center mt-1.5 gap-3">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase">{task.assignee}</span>
+                    <span className="text-[10px] font-bold text-[#64748b] uppercase">{task.assignee?.split(',').filter((n: string) => n.trim() && n.trim() !== 'Chưa gán').join(', ') || 'Chưa gán'}</span>
                     <span className="text-[10px] text-rose-500 font-black uppercase">• Chậm {task.delayDays} ngày</span>
                   </div>
                 </div>

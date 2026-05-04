@@ -299,13 +299,20 @@ export function Viewer() {
                                       <div className={`text-[9px] font-bold ${stStatus.color}`}>{subTask.deadline}</div>
                                       <div className="flex items-center gap-2">
                                         <div className="flex -space-x-1.5">
-                                          {subTask.assignee.split(',').map((name, i) => (
+                                          {subTask.assignee.split(',').filter(name => name.trim() && name.trim() !== 'Chưa gán').map((name, i) => (
                                             <div key={i} className="h-6 w-6 rounded-full bg-[#2563eb] border-2 border-white text-[8px] flex items-center justify-center text-white font-black" title={name.trim()}>
                                               {name.trim().substring(0, 2).toUpperCase()}
                                             </div>
                                           ))}
+                                          {(!subTask.assignee || subTask.assignee === 'Chưa gán' || subTask.assignee.trim() === '') && (
+                                            <div className="h-6 w-6 rounded-full bg-slate-400 border-2 border-white text-[8px] flex items-center justify-center text-white font-black" title="Chưa gán">
+                                              CH
+                                            </div>
+                                          )}
                                         </div>
-                                        <span className="text-[9px] font-bold text-[#1e3a8a] truncate max-w-[80px]">{subTask.assignee}</span>
+                                        <span className="text-[9px] font-bold text-[#1e3a8a] truncate max-w-[80px]">
+                                          {subTask.assignee.split(',').filter(name => name.trim() && name.trim() !== 'Chưa gán').join(', ') || 'Chưa gán'}
+                                        </span>
                                       </div>
                                       <div className="flex justify-end pr-2">
                                         <Badge variant="ghost" className={`text-[8px] font-black uppercase ${stStatus.color} border-none`}>{stStatus.label}</Badge>
