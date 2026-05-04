@@ -424,6 +424,13 @@ def submit_report(report: WeeklyReportCreate, user_id: str = Depends(get_current
         
     return report_data
 
+@app.delete("/api/reports/my-report")
+def delete_my_report(week: int, year: int, user_id: str = Depends(get_current_user)):
+    result = weekly_reports_collection.delete_one({"user_id": user_id, "week_number": week, "year": year})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Báo cáo không tồn tại hoặc đã bị thu hồi.")
+    return {"status": "recalled"}
+
 @app.get("/api/reports/team", response_model=List[WeeklyReportResponse])
 def get_team_reports(week: int, year: int, user_id: str = Depends(get_admin_user)):
     reports = list(weekly_reports_collection.find({"week_number": week, "year": year}))

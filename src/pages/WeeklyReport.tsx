@@ -142,6 +142,27 @@ export function WeeklyReport() {
     }
   };
 
+  const handleRecall = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn thu hồi báo cáo này? Dữ liệu đã nộp sẽ bị xóa hoàn toàn.')) return;
+    
+    setSaving(true);
+    try {
+      const res = await fetchWithAuth(`/reports/my-report?week=${selectedWeek}&year=${selectedYear}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        toast.success('Đã thu hồi báo cáo thành công');
+        loadData();
+      } else {
+        toast.error('Thu hồi báo cáo thất bại');
+      }
+    } catch (e) {
+      toast.error('Lỗi kết nối');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const addAdHoc = () => {
     if (!newAdHoc.trim()) return;
     setAdHocTasks(prev => [...prev, newAdHoc.trim()]);
@@ -479,11 +500,17 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
 
             </CardContent>
             
-            <div className="p-6 pt-4 flex justify-center bg-white/5 border-t border-white/10">
+            <div className="p-6 pt-4 flex flex-col md:flex-row justify-center gap-4 bg-white/5 border-t border-white/10">
                 <Button onClick={handleSubmit} disabled={saving} className="bg-[#2563eb] hover:bg-[#1d4ed8] px-16 rounded-2xl h-14 text-lg font-bold shadow-xl shadow-blue-100 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
                   <Send className="h-5 w-5" />
-                  {saving ? 'Đang gửi...' : 'Gửi báo cáo tuần'}
+                  {saving ? 'Đang gửi...' : (myReport ? 'Cập nhật báo cáo' : 'Gửi báo cáo tuần')}
                 </Button>
+                {myReport && (
+                  <Button onClick={handleRecall} disabled={saving} variant="outline" className="border-rose-200 text-rose-600 hover:bg-rose-50 px-8 rounded-2xl h-14 text-lg font-bold shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <Trash2 className="h-5 w-5" />
+                    Thu hồi
+                  </Button>
+                )}
             </div>
           </Card>
         </main>
