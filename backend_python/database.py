@@ -17,3 +17,11 @@ okrs_collection = db["okrs"]
 big_tasks_collection = db["big_tasks"]
 sub_tasks_collection = db["sub_tasks"]
 weekly_reports_collection = db["weekly_reports"]
+
+# Initialize Indexes for Performance
+try:
+    users_collection.create_index("email", unique=True)
+    weekly_reports_collection.create_index([("week_number", 1), ("year", 1), ("user_id", 1)])
+    sub_tasks_collection.create_index("assignee")
+except Exception as e:
+    print(f"Warning: Could not create indexes - {e}")

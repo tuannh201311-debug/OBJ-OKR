@@ -214,8 +214,8 @@ ${report.next_week_plan || '- Chưa lập kế hoạch'}
     const opt = {
       margin:       [10, 10, 10, 10],
       filename:     `Bao_Cao_Tuan_${selectedWeek}_${selectedYear}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      image:        { type: 'jpeg', quality: 0.8 },
+      html2canvas:  { scale: 1, useCORS: true, logging: false },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     

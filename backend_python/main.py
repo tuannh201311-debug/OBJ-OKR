@@ -36,6 +36,14 @@ app = FastAPI(title="OKR Management API")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.inmemory import InMemoryBackend
+from fastapi_cache.decorator import cache
+
+@app.on_event("startup")
+def on_startup():
+    FastAPICache.init(InMemoryBackend())
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:8081", "http://127.0.0.1:8081"],
@@ -207,6 +215,7 @@ def delete_user(target_id: str, user_id: str = Depends(get_admin_user)):
 
 # ================= OKRS API =================
 @app.get("/api/okrs", response_model=List[OKRResponse])
+@cache(expire=60)
 def get_okrs():
     return [{**o, "_id": str(o["_id"])} for o in okrs_collection.find({})]
 
@@ -269,6 +278,7 @@ def delete_okr(okr_id: str, user_id: str = Depends(get_admin_user)):
 
 # ================= BIG TASKS API =================
 @app.get("/api/big-tasks", response_model=List[BigTaskResponse])
+@cache(expire=60)
 def get_big_tasks():
     return [{**bt, "_id": str(bt["_id"])} for bt in big_tasks_collection.find({})]
 
