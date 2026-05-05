@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 import shutil
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import BaseModel
 
@@ -56,21 +56,53 @@ os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 def record_activity(user_id: str, item_type: str, item_id: str, item_title: str, action: str, changes: dict):
-    user_doc = users_collection.find_one({"id": user_id})
-    user_name = user_doc.get("display_name", "Unknown") if user_doc else "Unknown"
+    # Thời gian gom nhóm log (ví dụ: 15 phút)
+    # Nếu cùng một người sửa cùng một item trong vòng 15 phút, ta sẽ cập nhật log cũ thay vì tạo mới
+    window = datetime.utcnow() - timedelta(minutes=15)
     
-    log_entry = {
-        "id": generate_uuid(),
+    recent_log = activity_logs_collection.find_one({
         "user_id": user_id,
-        "user_name": user_name,
-        "item_type": item_type,
         "item_id": item_id,
-        "item_title": item_title,
-        "action": action,
-        "changes": changes,
-        "timestamp": datetime.utcnow().isoformat()
-    }
-    activity_logs_collection.insert_one(log_entry)
+        "action": "update",
+        "timestamp": {"$gt": window.isoformat()}
+    }, sort=[("timestamp", -1)])
+
+    if recent_log and action == "update":
+        # Cập nhật log hiện tại
+        updated_changes = recent_log.get("changes", {})
+        for field, delta in changes.items():
+            if field in updated_changes:
+                # Giữ nguyên giá trị 'old' ban đầu, chỉ cập nhật giá trị 'new' mới nhất
+                updated_changes[field]["new"] = delta["new"]
+                # Nếu sau khi cập nhật, giá trị mới lại bằng giá trị cũ (người dùng chỉnh qua lại rồi về như cũ)
+                # thì ta có thể xóa trường đó đi, nhưng ở đây cứ giữ để biết có thao tác.
+            else:
+                updated_changes[field] = delta
+        
+        activity_logs_collection.update_one(
+            {"id": recent_log["id"]},
+            {"$set": {
+                "changes": updated_changes, 
+                "timestamp": datetime.utcnow().isoformat()
+            }}
+        )
+    else:
+        # Tạo log mới
+        user_doc = users_collection.find_one({"id": user_id})
+        user_name = user_doc.get("display_name", "Unknown") if user_doc else "Unknown"
+        
+        log_entry = {
+            "id": generate_uuid(),
+            "user_id": user_id,
+            "user_name": user_name,
+            "item_type": item_type,
+            "item_id": item_id,
+            "item_title": item_title,
+            "action": action,
+            "changes": changes,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        activity_logs_collection.insert_one(log_entry)
 
 @app.post("/api/upload")
 def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
