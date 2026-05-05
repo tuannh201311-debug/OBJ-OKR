@@ -233,7 +233,7 @@ def create_okr(okr: OKRCreate, user_id: str = Depends(get_admin_user)):
     return okr_doc
 
 @app.put("/api/okrs/{okr_id}", response_model=OKRResponse)
-def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_admin_user)):
+def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_current_user)):
     existing = okrs_collection.find_one({"id": okr_id})
     okr_data = okr.dict()
     if not existing:
@@ -295,7 +295,7 @@ def create_big_task(big_task: BigTaskCreate, user_id: str = Depends(get_admin_us
     return bt_doc
 
 @app.put("/api/big-tasks/{big_task_id}", response_model=BigTaskResponse)
-def update_big_task(big_task_id: str, big_task: BigTaskCreate, user_id: str = Depends(get_admin_user)):
+def update_big_task(big_task_id: str, big_task: BigTaskCreate, user_id: str = Depends(get_current_user)):
     existing = big_tasks_collection.find_one({"id": big_task_id})
     bt_data = big_task.dict()
     if not existing:
@@ -358,7 +358,7 @@ def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_us
     return st_doc
 
 @app.put("/api/sub-tasks/{sub_task_id}", response_model=SubTaskResponse)
-def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = Depends(get_admin_user)):
+def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = Depends(get_current_user)):
     existing = sub_tasks_collection.find_one({"id": sub_task_id})
     st_data = sub_task.dict()
     if not existing:
