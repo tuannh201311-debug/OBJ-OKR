@@ -25,6 +25,7 @@ try:
     weekly_reports_collection.create_index([("week_number", 1), ("year", 1), ("user_id", 1)])
     sub_tasks_collection.create_index("assignee")
     activity_logs_collection.create_index([("item_id", 1), ("timestamp", -1)])
-    activity_logs_collection.create_index("timestamp")
+    # TTL Index: Tự động xóa sau 15 ngày
+    activity_logs_collection.create_index("timestamp", expireAfterSeconds=15 * 24 * 60 * 60)
 except Exception as e:
     print(f"Warning: Could not create indexes - {e}")

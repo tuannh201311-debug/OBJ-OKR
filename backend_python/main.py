@@ -64,7 +64,7 @@ def record_activity(user_id: str, item_type: str, item_id: str, item_title: str,
         "user_id": user_id,
         "item_id": item_id,
         "action": "update",
-        "timestamp": {"$gt": window.isoformat()}
+        "timestamp": {"$gt": window}
     }, sort=[("timestamp", -1)])
 
     if recent_log and action == "update":
@@ -83,7 +83,7 @@ def record_activity(user_id: str, item_type: str, item_id: str, item_title: str,
             {"id": recent_log["id"]},
             {"$set": {
                 "changes": updated_changes, 
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow()
             }}
         )
     else:
@@ -100,7 +100,7 @@ def record_activity(user_id: str, item_type: str, item_id: str, item_title: str,
             "item_title": item_title,
             "action": action,
             "changes": changes,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow()
         }
         activity_logs_collection.insert_one(log_entry)
 
