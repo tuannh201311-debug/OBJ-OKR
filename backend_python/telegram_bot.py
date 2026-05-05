@@ -65,8 +65,9 @@ from datetime import datetime, timedelta
 
 def check_deadlines():
     try:
-        now = datetime.utcnow()
-        today = now.date()
+        # Sử dụng giờ Việt Nam (UTC+7)
+        now_ict = datetime.utcnow() + timedelta(hours=7)
+        today = now_ict.date()
         
         # Lấy tất cả task chưa hoàn thành
         tasks = list(sub_tasks_collection.find({
@@ -82,8 +83,11 @@ def check_deadlines():
                 deadline_date = datetime.strptime(deadline_str, "%Y-%m-%d").date()
                 days_left = (deadline_date - today).days
                 
-                # Báo khi còn đúng 7, 3, 1 ngày
-                if days_left in [7, 3, 1]:
+                # Báo khi còn đúng 7, 3, 1 ngày hoặc quá hạn (days_left < 0)
+                if days_left in [7, 3, 1, 0] or (days_left < 0 and days_left > -30):
+                    status_text = f"SẮP TỚI HẠN (Còn {days_left} ngày)" if days_left > 0 else "HẾT HẠN HÔM NAY" if days_left == 0 else f"QUÁ HẠN ({abs(days_left)} ngày)"
+                    icon = "⚠️" if days_left >= 0 else "🚨"
+                    
                     assignee = task.get('assignee', 'Chưa gán')
                     title = task.get('title', '')
                     
@@ -95,7 +99,7 @@ def check_deadlines():
                         if okr:
                             okr_title = okr.get("title", "Không xác định")
                             
-                    msg = f"⚠️ <b>CẢNH BÁO SẮP TỚI HẠN (Còn {days_left} ngày)</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline_str}\n\nVui lòng cập nhật tiến độ!"
+                    msg = f"{icon} <b>CẢNH BÁO {status_text}</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline_str}\n\nVui lòng cập nhật tiến độ!"
                     send_telegram_message(msg)
                     time.sleep(1) # avoid rate limit
             except ValueError:
@@ -109,13 +113,18 @@ def start_telegram_polling():
         while True:
             get_updates()
             
-            # Run daily check
-            current_date = datetime.utcnow().strftime("%Y-%m-%d")
+            # Giờ Việt Nam (UTC+7)
+            ict_now = datetime.utcnow() + timedelta(hours=7)
+            current_date = ict_now.strftime("%Y-%m-%d")
+            
+            # Kiểm tra nếu là 9:30 sáng và chưa gửi thông báo hôm nay
             if current_date != last_check_date:
-                check_deadlines()
-                last_check_date = current_date
+                if ict_now.hour == 9 and ict_now.minute >= 30:
+                    print(f"[Telegram Bot] Running daily deadline check at {ict_now}")
+                    check_deadlines()
+                    last_check_date = current_date
                 
-            time.sleep(10)
+            time.sleep(30) # Kiểm tra mỗi 30 giây
             
     thread = threading.Thread(target=poll, daemon=True)
     thread.start()
