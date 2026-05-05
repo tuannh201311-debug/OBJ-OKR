@@ -260,9 +260,6 @@ def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_current_u
         if okr_data.get("progress") == 100:
             okr_data["completed_at"] = datetime.utcnow().isoformat()
         okrs_collection.insert_one(okr_data)
-        
-        # Log creation via PUT (upsert)
-        record_activity(user_id, "okr", okr_id, okr_data.get("title", ""), "create", {})
         return okr_data
     
     # Track changes
@@ -278,9 +275,6 @@ def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_current_u
         okr_data["completed_at"] = None
         
     okrs_collection.update_one({"id": okr_id}, {"$set": okr_data})
-    
-    if changes:
-        record_activity(user_id, "okr", okr_id, okr_data.get("title", ""), "update", changes)
 
     existing.update(okr_data)
     if "_id" in existing:
@@ -335,9 +329,6 @@ def update_big_task(big_task_id: str, big_task: BigTaskCreate, user_id: str = De
         if bt_data.get("progress") == 100:
             bt_data["completed_at"] = datetime.utcnow().isoformat()
         big_tasks_collection.insert_one(bt_data)
-        
-        # Log creation
-        record_activity(user_id, "big_task", big_task_id, bt_data.get("title", ""), "create", {})
         return bt_data
     
     # Track changes
@@ -353,9 +344,6 @@ def update_big_task(big_task_id: str, big_task: BigTaskCreate, user_id: str = De
         bt_data["completed_at"] = None
         
     big_tasks_collection.update_one({"id": big_task_id}, {"$set": bt_data})
-    
-    if changes:
-        record_activity(user_id, "big_task", big_task_id, bt_data.get("title", ""), "update", changes)
 
     existing.update(bt_data)
     if "_id" in existing:
@@ -461,7 +449,7 @@ def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = De
 
 @app.get("/api/activity-logs", response_model=List[dict])
 def get_activity_logs(user_id: str = Depends(get_admin_user)):
-    logs = list(activity_logs_collection.find({}).sort("timestamp", -1).limit(500))
+    logs = list(activity_logs_collection.find({"item_type": "sub_task"}).sort("timestamp", -1).limit(500))
     for log in logs:
         log["_id"] = str(log["_id"])
     return logs
