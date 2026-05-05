@@ -133,3 +133,14 @@ class WeeklyReportResponse(WeeklyReportBase):
     user_id: str
     user_name: Optional[str] = None
     submitted_at: str
+
+class ActivityLog(BaseModel):
+    id: str
+    user_id: str
+    user_name: str
+    item_type: str # okr, big_task, sub_task
+    item_id: str
+    item_title: str
+    action: str # create, update, delete
+    changes: dict # e.g. {"progress": {"old": 50, "new": 60}}
+    timestamp: str

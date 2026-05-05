@@ -9,12 +9,12 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 
-from database import users_collection, okrs_collection, big_tasks_collection, sub_tasks_collection, weekly_reports_collection
+from database import users_collection, okrs_collection, big_tasks_collection, sub_tasks_collection, weekly_reports_collection, activity_logs_collection
 from models import (
     UserCreate, UserUpdate, UserLogin, TokenResponse, UserResponse,
     OKRCreate, OKRResponse, BigTaskCreate, BigTaskResponse,
     SubTaskCreate, SubTaskResponse, generate_uuid,
-    WeeklyReportCreate, WeeklyReportResponse
+    WeeklyReportCreate, WeeklyReportResponse, ActivityLog
 )
 from auth import (
     get_password_hash, verify_password, create_access_token, get_current_user, get_admin_user
@@ -54,6 +54,23 @@ app.add_middleware(
 
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+def record_activity(user_id: str, item_type: str, item_id: str, item_title: str, action: str, changes: dict):
+    user_doc = users_collection.find_one({"id": user_id})
+    user_name = user_doc.get("display_name", "Unknown") if user_doc else "Unknown"
+    
+    log_entry = {
+        "id": generate_uuid(),
+        "user_id": user_id,
+        "user_name": user_name,
+        "item_type": item_type,
+        "item_id": item_id,
+        "item_title": item_title,
+        "action": action,
+        "changes": changes,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    activity_logs_collection.insert_one(log_entry)
 
 @app.post("/api/upload")
 def upload_file(file: UploadFile = File(...), user_id: str = Depends(get_current_user)):
@@ -243,14 +260,28 @@ def update_okr(okr_id: str, okr: OKRCreate, user_id: str = Depends(get_current_u
         if okr_data.get("progress") == 100:
             okr_data["completed_at"] = datetime.utcnow().isoformat()
         okrs_collection.insert_one(okr_data)
+        
+        # Log creation via PUT (upsert)
+        record_activity(user_id, "okr", okr_id, okr_data.get("title", ""), "create", {})
         return okr_data
     
+    # Track changes
+    changes = {}
+    if okr_data.get("progress") != existing.get("progress"):
+        changes["progress"] = {"old": existing.get("progress"), "new": okr_data.get("progress")}
+    if okr_data.get("title") != existing.get("title"):
+        changes["title"] = {"old": existing.get("title"), "new": okr_data.get("title")}
+
     if okr_data.get("progress") == 100 and existing.get("progress", 0) < 100:
         okr_data["completed_at"] = datetime.utcnow().isoformat()
     elif okr_data.get("progress", 0) < 100:
         okr_data["completed_at"] = None
         
     okrs_collection.update_one({"id": okr_id}, {"$set": okr_data})
+    
+    if changes:
+        record_activity(user_id, "okr", okr_id, okr_data.get("title", ""), "update", changes)
+
     existing.update(okr_data)
     if "_id" in existing:
         existing["_id"] = str(existing["_id"])
@@ -304,14 +335,28 @@ def update_big_task(big_task_id: str, big_task: BigTaskCreate, user_id: str = De
         if bt_data.get("progress") == 100:
             bt_data["completed_at"] = datetime.utcnow().isoformat()
         big_tasks_collection.insert_one(bt_data)
+        
+        # Log creation
+        record_activity(user_id, "big_task", big_task_id, bt_data.get("title", ""), "create", {})
         return bt_data
     
+    # Track changes
+    changes = {}
+    if bt_data.get("progress") != existing.get("progress"):
+        changes["progress"] = {"old": existing.get("progress"), "new": bt_data.get("progress")}
+    if bt_data.get("title") != existing.get("title"):
+        changes["title"] = {"old": existing.get("title"), "new": bt_data.get("title")}
+
     if bt_data.get("progress") == 100 and existing.get("progress", 0) < 100:
         bt_data["completed_at"] = datetime.utcnow().isoformat()
     elif bt_data.get("progress", 0) < 100:
         bt_data["completed_at"] = None
-
+        
     big_tasks_collection.update_one({"id": big_task_id}, {"$set": bt_data})
+    
+    if changes:
+        record_activity(user_id, "big_task", big_task_id, bt_data.get("title", ""), "update", changes)
+
     existing.update(bt_data)
     if "_id" in existing:
         existing["_id"] = str(existing["_id"])
@@ -352,10 +397,9 @@ def create_sub_task(sub_task: SubTaskCreate, user_id: str = Depends(get_admin_us
         if okr:
             okr_title = okr.get("title", "Không xác định")
             
-    msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
-    send_telegram_message(msg)
-    
-    return st_doc
+        msg = f"🆕 <b>CÓ VIỆC MỚI ĐƯỢC GIAO</b>\n\n🎯 <b>Dự án (OKR):</b> {okr_title}\n📌 <b>Công việc:</b> {title}\n👤 <b>Người phụ trách:</b> {assignee}\n⏰ <b>Hạn chót:</b> {deadline}\n\nHãy vào hệ thống để xem chi tiết!"
+        send_telegram_message(msg)
+        return st_doc
 
 @app.put("/api/sub-tasks/{sub_task_id}", response_model=SubTaskResponse)
 def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = Depends(get_current_user)):
@@ -367,6 +411,9 @@ def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = De
         if st_data.get("progress") == 100:
             st_data["completed_at"] = datetime.utcnow().isoformat()
         sub_tasks_collection.insert_one(st_data)
+        
+        # Log creation
+        record_activity(user_id, "sub_task", sub_task_id, st_data.get("title", ""), "create", {})
         
         # Send Telegram notification for upserted task
         assignee = st_data.get("assignee", "Chưa gán")
@@ -386,16 +433,38 @@ def update_sub_task(sub_task_id: str, sub_task: SubTaskCreate, user_id: str = De
         
         return st_data
     
+    # Track changes
+    changes = {}
+    if st_data.get("progress") != existing.get("progress"):
+        changes["progress"] = {"old": existing.get("progress"), "new": st_data.get("progress")}
+    if st_data.get("note") != existing.get("note"):
+        changes["note"] = {"old": existing.get("note"), "new": st_data.get("note")}
+    if st_data.get("status") != existing.get("status"):
+        changes["status"] = {"old": existing.get("status"), "new": st_data.get("status")}
+    if st_data.get("title") != existing.get("title"):
+        changes["title"] = {"old": existing.get("title"), "new": st_data.get("title")}
+
     if st_data.get("progress") == 100 and existing.get("progress", 0) < 100:
         st_data["completed_at"] = datetime.utcnow().isoformat()
     elif st_data.get("progress", 0) < 100:
         st_data["completed_at"] = None
-
+ 
     sub_tasks_collection.update_one({"id": sub_task_id}, {"$set": st_data})
+    
+    if changes:
+        record_activity(user_id, "sub_task", sub_task_id, st_data.get("title", ""), "update", changes)
+
     existing.update(st_data)
     if "_id" in existing:
         existing["_id"] = str(existing["_id"])
     return existing
+
+@app.get("/api/activity-logs", response_model=List[dict])
+def get_activity_logs(user_id: str = Depends(get_admin_user)):
+    logs = list(activity_logs_collection.find({}).sort("timestamp", -1).limit(500))
+    for log in logs:
+        log["_id"] = str(log["_id"])
+    return logs
 
 @app.delete("/api/sub-tasks/{sub_task_id}")
 def delete_sub_task(sub_task_id: str, user_id: str = Depends(get_admin_user)):
