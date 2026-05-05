@@ -11,6 +11,7 @@ import { Login } from "@/pages/Login";
 import { Viewer } from "@/pages/Viewer";
 import { Settings } from "@/pages/Settings";
 import { WeeklyReport } from "@/pages/WeeklyReport";
+import { ActivityLogs } from "@/pages/ActivityLogs";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="okr-tree" element={<OKRTree />} />
               <Route path="weekly-report" element={<WeeklyReport />} />
+              <Route path="activity-logs" element={<ActivityLogs />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
